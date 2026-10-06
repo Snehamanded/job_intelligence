@@ -16,6 +16,8 @@ class TaskQueue(Protocol):
 
     def enqueue_rescore(self, user_id: uuid.UUID) -> None: ...
 
+    def enqueue_import(self, user_id: uuid.UUID, batch_id: uuid.UUID) -> None: ...
+
     def enqueue_tailor(self, user_id: uuid.UUID, version_id: uuid.UUID) -> None: ...
 
     def enqueue_cover_letter(self, user_id: uuid.UUID, letter_id: uuid.UUID) -> None: ...
@@ -44,6 +46,17 @@ class RQTaskQueue:
             run_search_job,
             str(user_id),
             str(run_id),
+            job_timeout=self._settings.search_job_timeout_seconds,
+            failure_ttl=7 * 24 * 3600,
+        )
+
+    def enqueue_import(self, user_id: uuid.UUID, batch_id: uuid.UUID) -> None:
+        from app.workers.tasks import import_posts_job
+
+        self._queue.enqueue(
+            import_posts_job,
+            str(user_id),
+            str(batch_id),
             job_timeout=self._settings.search_job_timeout_seconds,
             failure_ttl=7 * 24 * 3600,
         )

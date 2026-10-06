@@ -14,7 +14,7 @@ function PrintableLetter() {
   if (letter.data.status !== "saved")
     return <p className="p-8 text-sm">Save this letter before printing it.</p>;
   return (
-    <main className="mx-auto max-w-[760px] bg-white p-10 text-black print:p-0">
+    <main className="mx-auto max-w-[760px] bg-white p-10 text-black print:p-[16mm]">
       <div className="mb-6 flex items-center gap-3 print:hidden">
         <Button onClick={() => window.print()}>Print / Save as PDF</Button>
         <span className="text-sm text-muted-foreground">

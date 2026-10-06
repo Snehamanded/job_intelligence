@@ -16,7 +16,7 @@ from app.services.profile import ProfileService, preferences_of
 from app.services.resume.documents import ExtractionError, extract_text
 from app.services.resume.evidence import EvidenceValidator
 from app.services.resume.heuristic import heuristic_extract
-from app.services.storage import LocalFileStorage
+from app.services.storage import FileStorage
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class ResumeParsingService:
         *,
         provider: AIProvider | None,
         settings: Settings,
-        storage: LocalFileStorage,
+        storage: FileStorage,
         today: date | None = None,
     ) -> None:
         self._session = session

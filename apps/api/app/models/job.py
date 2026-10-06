@@ -142,3 +142,30 @@ class JobSourceConfig(UUIDPrimaryKey, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class ImportBatch(UUIDPrimaryKey, Timestamps, Base):
+    """Job posts pasted from email alerts or a WhatsApp chat export, imported in the background."""
+
+    __tablename__ = "import_batches"
+    __table_args__ = (
+        CheckConstraint("status IN ('queued', 'running', 'completed', 'failed')", name="status"),
+        CheckConstraint("channel IN ('email', 'whatsapp', 'other')", name="channel"),
+        Index("ix_import_batches_user_id_created_at", "user_id", "created_at"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    channel: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    method: Mapped[str | None] = mapped_column(String(16))  # ai | rules
+    # The pasted text, cleared once processed: it can hold other people's names and numbers.
+    pasted_text: Mapped[str | None] = mapped_column(Text)
+    # One entry per post found: title, company, status, job_id, note.
+    results: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, server_default=text("'[]'::jsonb"), nullable=False
+    )
+    notice: Mapped[str | None] = mapped_column(String(500))
+    error_message: Mapped[str | None] = mapped_column(String(500))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

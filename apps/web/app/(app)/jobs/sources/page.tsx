@@ -19,6 +19,21 @@ import {
 } from "@/lib/api/jobs";
 import { SOURCE_LABEL } from "@/lib/jobs-format";
 
+const CATEGORIES = [
+  ["ats", "Company career portals"],
+  ["remote", "Remote job boards"],
+  ["general", "General job boards"],
+  ["india", "India job boards"],
+  ["startup", "Startup and tech boards"],
+] as const;
+
+const KIND = {
+  real: { label: "Searched automatically", variant: "success" },
+  import: { label: "Import by link", variant: "secondary" },
+  mock: { label: "Paste description", variant: "outline" },
+  manual_only: { label: "Paste description", variant: "outline" },
+} as const;
+
 const BOARD_HELP: Record<string, string> = {
   greenhouse: "the part after greenhouse.io/ in the careers link, e.g. gitlab",
   lever: "the part after jobs.lever.co/, e.g. palantir",
@@ -61,8 +76,8 @@ export default function SourcesPage() {
 
   const toggle = (source: NewJobSource["source"], on: boolean) => {
     const existing = configs.find((c) => c.source === source);
-    if (on && !existing) add.mutate({ source });
-    if (!on && existing) remove.mutate(existing.id);
+    if (on && !existing?.enabled) add.mutate({ source });
+    if (!on && existing?.enabled) remove.mutate(existing.id);
   };
 
   return (
@@ -162,7 +177,7 @@ export default function SourcesPage() {
                 <div key={c.name} className="flex items-start gap-3">
                   <Switch
                     id={`feed-${c.name}`}
-                    checked={Boolean(config)}
+                    checked={Boolean(config?.enabled)}
                     disabled={add.isPending || remove.isPending}
                     onCheckedChange={(on) => toggle(c.name as NewJobSource["source"], on)}
                   />
@@ -218,31 +233,38 @@ export default function SourcesPage() {
           <CardHeader>
             <CardTitle>All sources</CardTitle>
             <CardDescription>
-              Only sources with an official API or public feed are fetched automatically. Others can
-              be added by importing individual jobs.
+              Sources with an official API or public feed are searched automatically. Sites that
+              don&apos;t allow automated access are never fetched: import their jobs by pasting the
+              description.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="grid gap-3">
-              {(connectors.data ?? []).map((c) => (
-                <li key={c.name} className="grid gap-1 text-sm">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{c.label}</span>
-                    <Badge variant={c.kind === "real" ? "success" : "secondary"}>
-                      {c.kind === "real"
-                        ? "Live"
-                        : c.kind === "mock"
-                          ? "Mock only"
-                          : "Manual import"}
-                    </Badge>
-                    {c.kind === "real" && !c.enabled && (
-                      <Badge variant="outline">Not configured</Badge>
-                    )}
-                  </div>
-                  <p className="text-muted-foreground">{c.note}</p>
-                </li>
-              ))}
-            </ul>
+          <CardContent className="grid gap-6">
+            {CATEGORIES.map(([category, title]) => {
+              const items = (connectors.data ?? []).filter((c) => c.category === category);
+              if (items.length === 0) return null;
+              return (
+                <section key={category} aria-label={title} className="grid gap-3">
+                  <h3 className="text-sm font-semibold">{title}</h3>
+                  <ul className="grid gap-3">
+                    {items.map((c) => (
+                      <li key={c.name} className="grid gap-1 text-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">{c.label}</span>
+                          <Badge variant={KIND[c.kind].variant}>{KIND[c.kind].label}</Badge>
+                          {c.kind === "real" && !c.enabled && (
+                            <Badge variant="outline">Not configured</Badge>
+                          )}
+                          {c.kind === "mock" && c.enabled && (
+                            <Badge variant="warning">mock enabled</Badge>
+                          )}
+                        </div>
+                        <p className="text-muted-foreground">{c.note}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
           </CardContent>
         </Card>
       </div>

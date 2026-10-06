@@ -1,5 +1,7 @@
 import logging
+import time
 import uuid
+from collections.abc import Callable
 from datetime import UTC, date, datetime
 
 from rq.timeouts import JobTimeoutException
@@ -8,15 +10,17 @@ from sqlalchemy.orm import Session
 
 from app.ai.providers import AIProvider, get_ai_provider
 from app.connectors.base import JobConnector
-from app.connectors.registry import build_connectors
+from app.connectors.registry import Connectors, build, build_connectors
 from app.core.config import Settings, get_settings
 from app.core.db import get_sessionmaker
-from app.models import SearchRun
+from app.models import ImportBatch, SearchRun
 from app.services.cover_letters.service import CoverLetterService
+from app.services.jobs.bulk_import import BulkImporter
+from app.services.jobs.retention import prune
 from app.services.jobs.search import SearchService
 from app.services.matching.service import MatchingService
 from app.services.resume.parsing import ResumeParsingService
-from app.services.storage import LocalFileStorage, get_storage
+from app.services.storage import FileStorage, get_storage
 from app.services.tailoring.service import TailoringService
 
 logger = logging.getLogger(__name__)
@@ -40,7 +44,7 @@ def parse_and_score(
     *,
     provider: AIProvider | None,
     settings: Settings,
-    storage: LocalFileStorage,
+    storage: FileStorage,
     user_id: uuid.UUID,
     resume_id: uuid.UUID,
     today: date | None = None,
@@ -68,6 +72,7 @@ def search_and_score(
     run_id: uuid.UUID,
 ) -> None:
     try:
+        prune(session, settings, user_id)
         SearchService(session, connectors).run(user_id, run_id)
     except Exception as exc:
         session.rollback()
@@ -80,6 +85,39 @@ def search_and_score(
                 status="failed",
                 finished_at=datetime.now(UTC),
                 error_message="The search took too long." if timed_out else "The search failed.",
+            )
+        )
+        session.commit()
+        if not timed_out:
+            raise
+        return
+    rescore(session, provider, settings, user_id)
+
+
+def import_and_score(
+    session: Session,
+    *,
+    connectors: Connectors,
+    provider: AIProvider | None,
+    settings: Settings,
+    user_id: uuid.UUID,
+    batch_id: uuid.UUID,
+    sleep: Callable[[float], None] = time.sleep,
+) -> None:
+    try:
+        BulkImporter(session, provider, settings, connectors, user_id, sleep).run(batch_id)
+    except Exception as exc:
+        session.rollback()
+        timed_out = isinstance(exc, JobTimeoutException)
+        logger.exception("import_batch_failed", extra={"import_batch_id": str(batch_id)})
+        session.execute(
+            update(ImportBatch)
+            .where(ImportBatch.id == batch_id, ImportBatch.user_id == user_id)
+            .values(
+                status="failed",
+                pasted_text=None,
+                finished_at=datetime.now(UTC),
+                error_message="The import took too long." if timed_out else "The import failed.",
             )
         )
         session.commit()
@@ -115,6 +153,19 @@ def run_search_job(user_id: str, run_id: str) -> None:
             settings=settings,
             user_id=uuid.UUID(user_id),
             run_id=uuid.UUID(run_id),
+        )
+
+
+def import_posts_job(user_id: str, batch_id: str) -> None:
+    settings = get_settings()
+    with get_sessionmaker()() as session:
+        import_and_score(
+            session,
+            connectors=build(settings),
+            provider=get_ai_provider(settings),
+            settings=settings,
+            user_id=uuid.UUID(user_id),
+            batch_id=uuid.UUID(batch_id),
         )
 
 

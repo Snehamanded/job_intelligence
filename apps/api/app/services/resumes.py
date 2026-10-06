@@ -8,7 +8,7 @@ from app.core.config import Settings
 from app.models import Resume
 from app.repositories.resumes import ResumeRepository
 from app.services.resume.documents import safe_display_name, validate_upload
-from app.services.storage import LocalFileStorage
+from app.services.storage import FileStorage
 from app.workers.queue import TaskQueue
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ResumeService:
     def __init__(
-        self, session: Session, settings: Settings, storage: LocalFileStorage, queue: TaskQueue
+        self, session: Session, settings: Settings, storage: FileStorage, queue: TaskQueue
     ) -> None:
         self._session = session
         self._settings = settings

@@ -71,7 +71,7 @@ def test_search_without_sources(client: TestClient) -> None:
     run = _search(client, headers)
     assert run["status"] == "completed"
     assert run["source_results"][0]["status"] == "skipped"
-    assert "Add a Greenhouse board" in run["error_message"]
+    assert "No sources are switched on" in run["error_message"]
 
 
 def test_search_real_payloads_with_eligibility(client: TestClient) -> None:

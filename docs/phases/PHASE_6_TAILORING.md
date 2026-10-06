@@ -56,8 +56,8 @@ Without AI consent or a configured provider, tailoring still works with rule-bas
   - `/tailoring` lists versions.
   - `/tailoring/[id]` shows changes with before/after, labels, unsupported reasons,
     accept/reject, a live preview and skill gaps.
-  - Save, then download DOCX or print to PDF from a clean single-column page that ATS systems
-    can read.
+  - Save, then download PDF or DOCX in the uploaded resume's layout (see docs/AI.md), or a
+    classic single-column layout that ATS systems can read when the upload was plain text.
 - Export and delete cover resume versions.
 
 ## Definition of Done

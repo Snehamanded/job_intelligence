@@ -1,0 +1,171 @@
+{
+ "comments": "21/08/2026: Cursor pagination is now available and is the preferred way to page through the feed. Pass the nextCursor value from each response back as ?cursor=. It is faster than offset and will never return the same job twice. The offset parameter is deprecated and will be removed in a future release. 13/03/2026: The API has been updated to include the companySlug field in the response.",
+ "updatedAt": 1791257865,
+ "offset": 0,
+ "limit": 20,
+ "totalCount": 771,
+ "jobs": [
+  {
+   "title": "Backend Engineer - AI Coding Agent",
+   "excerpt": "About the jobMercor connects elite creative and technical talent with leading AI research labs.",
+   "companyName": "mercor",
+   "companySlug": "mercor",
+   "companyLogo": "https://cdn-images.himalayas.app/6jo5q9nua35jgtdfm41nq6b7ocqf",
+   "employmentType": "Contractor",
+   "minSalary": null,
+   "maxSalary": null,
+   "salaryPeriod": "hourly",
+   "seniority": [
+    "Mid-level"
+   ],
+   "currency": "USD",
+   "locationRestrictions": [
+    "India"
+   ],
+   "timezoneRestrictions": [
+    5.5
+   ],
+   "categories": [
+    "Backend-Engineering",
+    "Software-Engineer",
+    "AI-ML-Engineer",
+    "API-Development",
+    "Code-Review",
+    "Backend-AI-Engineer",
+    "AI-Backend-Engineer",
+    "Backend-AI-Engineering",
+    "AI-Backend-Development",
+    "AI-Coding-Agent-Development",
+    "Backend-Engineer"
+   ],
+   "parentCategories": [
+    "Developer"
+   ],
+   "description": "<h3>About the job</h3><p><strong>Mercor</strong> connects elite creative and technical talent with leading AI research labs. Headquartered in San Francisco, our investors include <strong>Benchmark</strong>, <strong>General Catalyst</strong>, <strong>Peter Thiel</strong>, <strong>Adam D'Angelo</strong>, <strong>Larry Summers</strong>, and <strong>Jack Dorsey</strong>.</p><p><strong>Position:</strong> Backend Engineer (Coding Agent Experience)<br><strong>Type:</strong><strong>Contract</strong><br><strong>Compensation:</strong><strong>$85/hour</strong><br><strong>Location:</strong><strong>Remote</strong></p><h3>Role Responsibilities</h3><ul>\n<li>Use frontier <strong>AI coding agents</strong> to complete and evaluate complex engineering tasks.</li>\n<li>Review model-generated code for correctness, quality, maintainability, and performance.</li>\n<li>Identify bugs, edge cases, and failure modes in model outputs.</li>\n<li>Compare outputs from multiple frontier models and assess their strengths and weaknesses.</li>\n<li>Apply professional engineering judgment to realistic backend engineering scenarios.</li>\n<li>Work <strong>independently and asynchronously</strong> to meet deadlines while improving <strong>AI model performance</strong>.</li>\n</ul><h3>Qualifications</h3><p></p><p><strong>Must-Have</strong></p><ul>\n<li><strong><strong>2+ years</strong> of professional backend engineering experience.</strong></li>\n<li><strong>Experience building <strong>APIs</strong>, distributed systems, microservices, backend platforms, or databases.</strong></li>\n<li><strong>Regular use of <strong>AI coding agents</strong> such as Cursor, Claude Code, Codex, Windsurf, Gemini CLI, or similar tools.</strong></li>\n<li><strong>Ability to evaluate model-generated code and identify bugs, edge cases, and architectural tradeoffs.</strong></li>\n</ul><h3><strong>Preferred</strong></h3><ul><li><strong>Experience working on large-scale production systems.</strong></li></ul><h3><strong>Compensation &amp; Legal</strong></h3><ul>\n<li><strong><strong>$400 per accepted task</strong></strong></li>\n<li><strong>Compensation is tied to accepted work.</strong></li>\n</ul><h3><strong>Application Process (Takes 20–30 mins to complete)</strong></h3><ul>\n<li><strong>Upload resume</strong></li>\n<li><strong>AI interview based on your resume</strong></li>\n<li><strong>Submit form</strong></li>\n</ul><h3><strong>Resources &amp; Support</strong></h3><ul>\n<li><strong>For details about the interview process and platform information, please check: </strong></li>\n<li><strong>For any help or support, reach out to: </strong></li>\n</ul><p><strong><em>PS: Our team reviews applications daily. Please complete your AI interview and application steps to be considered for this opportunity.</em></strong></p><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+   "pubDate": 1789921889,
+   "expiryDate": 1795105888,
+   "applicationLink": "https://himalayas.app/companies/mercor/jobs/backend-engineer-ai-coding-agent-2832690889",
+   "guid": "https://himalayas.app/companies/mercor/jobs/backend-engineer-ai-coding-agent-2832690889"
+  },
+  {
+   "title": "Backend Engineer",
+   "excerpt": "Drivetrain is on a mission to empower businesses to make better decisions.",
+   "companyName": "Drivetrain",
+   "companySlug": "drivetrain",
+   "companyLogo": "",
+   "employmentType": "Full Time",
+   "minSalary": null,
+   "maxSalary": null,
+   "salaryPeriod": "annual",
+   "seniority": [
+    "Mid-level"
+   ],
+   "currency": null,
+   "locationRestrictions": [
+    "India"
+   ],
+   "timezoneRestrictions": [
+    5.5
+   ],
+   "categories": [
+    "Backend-Engineering",
+    "Software-Engineer",
+    "Java-Development",
+    "Cloud-Computing",
+    "Engineering",
+    "Backend-Engineer",
+    "Backend-Infrastructure-Engineer",
+    "Backend-Systems-Engineer",
+    "Backend-Services-Engineer",
+    "Product-Backend-Engineer",
+    "Backend-Platform-Engineer",
+    "Cloud-Backend-Engineer",
+    "Python-Backend-Engineer",
+    "SaaS-Backend-Engineer"
+   ],
+   "parentCategories": [
+    "Developer"
+   ],
+   "description": "<div>\n<a href=\"https://himalayas.app/companies/drivetrain\">Drivetrain</a> is on a mission to empower businesses to make better decisions. Our financial planning &amp; decision-making platform helps companies scale and achieve their targets predictably. </div><div>\n<a href=\"https://himalayas.app/companies/drivetrain\">Drivetrain</a> is a remote-first company headquartered in the San Francisco Bay Area. Founded in 2021 by a couple of ex-Googlers, <a href=\"https://himalayas.app/companies/drivetrain\">Drivetrain</a> is a fast-growing company on a trajectory for success with backing from leading venture capital firms.</div><div><b><a href=\"https://himalayas.app/companies/drivetrain\">Drivetrain</a> provides a great culture for its employees to thrive in and be happy. </b></div><div>\n<b>💜 Remote-friendly: </b><a href=\"https://himalayas.app/companies/drivetrain\">Drivetrain</a> brings together the best and the brightest, no matter where they are and provides them a great degree of autonomy. We trust our people.</div><div>\n<b>🗣️ Open &amp; transparent:</b>  We know that when our creators have access to all the information they need, their best work will emerge.</div><div>\n<b>👏 Idea-friendly:</b>  We provide an environment to explore new ideas, to take risks, to make mistakes, and to learn, so you can succeed. Anyone in the company can come up with great ideas and become a catalyst for positive change. We let the best ideas win.</div><div>\n<b>👥 Customer-centric:</b>  We follow a product-led growth strategy, continuously  learning from our customers and collaborating to build the amazing software that <a href=\"https://himalayas.app/companies/drivetrain\">Drivetrain</a> is.</div><h3>About the role</h3><div>\n<a href=\"https://himalayas.app/companies/drivetrain\">Drivetrain</a> is looking for a Backend Engineer to join our team. The role involves working on challenging problems in backend application development, algorithms, system design, and serving in production.</div><h3>What you’ll be doing</h3><div>The underlying technical problems are challenging - how do you design abstractions that minimise custom code, as every business is a little different; how do you deal with data scattered across multiple systems and make sense of a large number of moving parts.</div><div>You get to work on a cutting edge stack consisting of Java, Spring, Hibernate, Redis, Elasticsearch, PostgreSQL, BigQuery, and AWS. </div><div>Determine operational feasibility by evaluating analysis, problem definition, requirements, solution development and proposed solutions. </div><div>Take accountability for the quality, total cost of ownership, maintainability and security of the component developed. Review code developed by other developers and provide feedback to ensure best practices (e.g., style guidelines, checking code in, accuracy, testability, and efficiency). </div><div>Contribute to existing documentation or educational content and adapt content based on product/program updates and user feedback. </div><div>Seek out opportunities for innovation that can be shared between multiple teams that have a willingness to experiment as well as the courage to boldly confront problems of a large complexity and scope. </div><div>As an early team member, you’ll help shape our company culture, engineering practices, and the product.</div><h3>Requirements</h3><div>A great problem solver and is passionate about the craft of building software.</div><div>Has a deep understanding of algorithms, data structures, and distributed systems.</div><div>Has at least 3 years of experience in software engineering.</div><div>Experience with the above-mentioned stack would be helpful but is not necessary.</div><div>Is aspirational, self-driven, and proactive.</div><div>Has excellent communication skills.</div><div>\n<b>Sounds exciting? Apply at </b><b></b><b>. It may just be the next best decision you’ve ever made!</b>\n</div><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+   "pubDate": 1789756282,
+   "expiryDate": 1794940281,
+   "applicationLink": "https://himalayas.app/companies/drivetrain/jobs/backend-engineer-2412449815",
+   "guid": "https://himalayas.app/companies/drivetrain/jobs/backend-engineer-2412449815"
+  },
+  {
+   "title": "Backend Engineer",
+   "excerpt": "About the RoleThis is a backend engineering role at the heart of a fintech team building compliance and identity infrastructure for businesses.",
+   "companyName": "Clera",
+   "companySlug": "clera",
+   "companyLogo": "",
+   "employmentType": "Full Time",
+   "minSalary": 116000,
+   "maxSalary": 146000,
+   "salaryPeriod": "annual",
+   "seniority": [
+    "Mid-level"
+   ],
+   "currency": "EUR",
+   "locationRestrictions": [],
+   "timezoneRestrictions": [
+    -11,
+    -10,
+    -9.5,
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    -4,
+    -3.5,
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2,
+    3,
+    3.5,
+    4,
+    4.5,
+    5,
+    5.5,
+    5.75,
+    6,
+    6.5,
+    7,
+    8,
+    8.75,
+    9,
+    9.5,
+    10,
+    10.5,
+    11,
+    12,
+    12.75,
+    13,
+    14
+   ],
+   "categories": [
+    "Backend-Engineer",
+    "Backend-Engineering",
+    "Backend-Infrastructure-Engineer",
+    "Backend-Systems-Engineer",
+    "Backend-Services-Engineer",
+    "Product-Backend-Engineer",
+    "Backend-Platform-Engineer",
+    "Cloud-Backend-Engineer",
+    "Python-Backend-Engineer",
+    "SaaS-Backend-Engineer"
+   ],
+   "parentCategories": [
+    "Developer"
+   ],
+   "description": "<h3>About the Role</h3><p>This is a backend engineering role at the heart of a fintech team building compliance and identity infrastructure for businesses. You will design scalable, high-trust systems and help shape the engineering culture of a senior, distributed team solving a genuinely hard technical problem.</p><h3>What You'll Do</h3><ul>\n<li><p>Design and build backend systems that are clean, testable, and efficient.</p></li>\n<li><p>Architect scalable APIs and infrastructure suited to high-trust, regulated environments.</p></li>\n<li><p>Bring strong opinions on testing, quality, and long-term maintainability to every project.</p></li>\n<li><p>Tackle complex product challenges by thinking deeply about user needs and system behavior.</p></li>\n<li><p>Shape engineering practices and technical culture through collaboration and hands-on leadership.</p></li>\n</ul><h3>What We're Looking For</h3><ul>\n<li><p>5 or more years of backend engineering experience building production APIs, distributed services, or backend systems; the team skews toward 7+ years.</p></li>\n<li><p>Strong systems thinking: ability to see beyond individual features and reason about large-scale architectural problems.</p></li>\n<li><p>Experience building in high-trust or regulated domains such as fintech, payments, or identity.</p></li>\n<li><p>Hands-on experience with relational databases (Postgres or similar) in production.</p></li>\n<li><p>Experience with message queues or event-driven architectures (RabbitMQ, Kafka, or similar).</p></li>\n<li><p>Experience deploying and managing applications in containerized or cloud environments (Kubernetes, AWS, or similar).</p></li>\n<li><p>A track record of writing automated tests and maintaining testable codebases.</p></li>\n<li><p>Familiarity with Node.js, TypeScript, Express, and Event Sourcing patterns is a plus but not required.</p></li>\n<li><p>Background at a high-caliber fintech, payments, or high-growth technology company is a strong signal.</p></li>\n<li><p>Clear communicator who enjoys breaking down complexity and collaborating closely with teammates.</p></li>\n<li><p>Comfortable working with ambiguity and driven by curiosity, big ambitions, and kindness.</p></li>\n</ul><h3>Compensation &amp; Benefits</h3><p>Base salary: <strong>EUR 116,000 to 146,000</strong>, applied consistently at each level with no individual salary negotiation. Visa sponsorship is not available.</p><h3>Location</h3><p>Fully remote, open to candidates in European timezones. European timezone availability is a hard requirement. The team meets in person every six weeks for a company-wide gathering.</p><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+   "pubDate": 1790730796,
+   "expiryDate": 1795914795,
+   "applicationLink": "https://himalayas.app/companies/clera/jobs/backend-engineer-9187001888",
+   "guid": "https://himalayas.app/companies/clera/jobs/backend-engineer-9187001888"
+  }
+ ]
+}

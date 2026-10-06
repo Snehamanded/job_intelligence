@@ -19,6 +19,9 @@ os.environ["LLM_RETRY_BACKOFF_SECONDS"] = "0"
 os.environ["AI_PROVIDER"] = "gemini"
 os.environ["GEMINI_API_KEY"] = ""
 os.environ["OPENAI_API_KEY"] = ""
+os.environ["ADZUNA_APP_ID"] = ""
+os.environ["ADZUNA_APP_KEY"] = ""
+os.environ["DEFAULT_SOURCES_ENABLED"] = "false"  # tests add their own sources
 
 import json
 import uuid
@@ -42,8 +45,9 @@ from app.core.config import Settings, get_settings
 from app.core.db import get_engine, get_sessionmaker
 from app.core.redis import get_redis
 from app.main import create_app
-from app.services.storage import LocalFileStorage
+from app.services.storage import FileStorage, LocalFileStorage
 from app.workers.tasks import (
+    import_and_score,
     parse_and_score,
     rescore,
     search_and_score,
@@ -148,8 +152,23 @@ def greenhouse_transport(
             return _json(SOURCES / "remoteok.json")
         if host == "remotive.com" and path == "/api/remote-jobs":
             return _json(SOURCES / "remotive.json")
+        if host == "weworkremotely.com" and path == "/remote-jobs.rss":
+            return httpx.Response(200, text=(SOURCES / "weworkremotely.rss").read_text(),
+                                  headers={"content-type": "application/rss+xml"})  # fmt: skip
+        if host == "jobspresso.co" and path == "/jobs/feed/":
+            return httpx.Response(200, text=(SOURCES / "jobspresso.rss").read_text(),
+                                  headers={"content-type": "application/rss+xml"})  # fmt: skip
+        if host == "himalayas.app" and path == "/jobs/api/search":
+            if request.url.params.get("page", "1") != "1":
+                return httpx.Response(200, json={"jobs": []})
+            return _json(SOURCES / "himalayas_search.json")
         if host == "api.adzuna.com":
             return _json(SOURCES / f"adzuna_{parts[3]}.json")
+        if host == "acme.wd5.myworkdayjobs.com":
+            if path == "/robots.txt":
+                return httpx.Response(404)
+            return httpx.Response(200, text=(CAREERS / "job.html").read_text(),
+                                  headers={"content-type": "text/html"})  # fmt: skip
         if host == "careers.example.com":
             if path == "/robots.txt":
                 return httpx.Response(200, text="User-agent: *\nDisallow: /private/\n")
@@ -185,7 +204,7 @@ def fake_greenhouse(transport: httpx.MockTransport | None = None) -> GreenhouseC
 class InlineQueue:
     """Runs background jobs immediately, in-process, with fakes for AI and job sources."""
 
-    def __init__(self, provider: FakeAIProvider, settings: Settings, storage: LocalFileStorage):
+    def __init__(self, provider: FakeAIProvider, settings: Settings, storage: FileStorage):
         self.provider = provider
         self.settings = settings
         self.storage = storage
@@ -206,6 +225,20 @@ class InlineQueue:
                 settings=self.settings,
                 user_id=user_id,
                 run_id=run_id,
+            )
+
+    def enqueue_import(self, user_id: uuid.UUID, batch_id: uuid.UUID) -> None:
+        if self.paused:
+            return
+        with get_sessionmaker()() as session:
+            import_and_score(
+                session,
+                connectors=fake_connectors(),
+                provider=self.provider,
+                settings=self.settings,
+                user_id=user_id,
+                batch_id=batch_id,
+                sleep=lambda _: None,
             )
 
     def enqueue_tailor(self, user_id: uuid.UUID, version_id: uuid.UUID) -> None:

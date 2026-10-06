@@ -133,3 +133,18 @@ class SentenceCheck(_Strict):
 
 class LetterVerifyReport(_Strict):
     results: list[SentenceCheck] = Field(default_factory=list, max_length=60)
+
+
+class FoundJobPost(_Strict):
+    """One job post found in pasted alert emails or chat messages. Every field is quoted."""
+
+    start_quote: str = Field(min_length=1, max_length=300)
+    end_quote: str = Field(min_length=1, max_length=300)
+    title: str = Short
+    company: str | None = Field(default=None, max_length=200)
+    location: str | None = Field(default=None, max_length=200)
+    url: str | None = Field(default=None, max_length=2000)
+
+
+class FoundJobPosts(_Strict):
+    posts: list[FoundJobPost] = Field(default_factory=list, max_length=60)

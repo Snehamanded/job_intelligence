@@ -13,6 +13,12 @@ How the app uses LLMs, and the guarantees around them. Read [AGENTS.md](../AGENT
 | Tailoring verification (second pass) | 6 | `app/ai/prompts/tailor_resume.py` | `VerifyReport` |
 | Cover letter draft | 7 | `app/ai/prompts/cover_letter.py` | `LetterDraft` |
 | Cover letter verification (second pass) | 7 | `app/ai/prompts/cover_letter.py` | `LetterVerifyReport` |
+| Finding job posts in pasted alert emails / WhatsApp messages | 8 | `app/ai/prompts/job_posts.py` | `FoundJobPosts` |
+
+Job post finding never writes job text itself: the model quotes each post's first and last words,
+the post is sliced from the pasted text in code (`services/jobs/bulk_import.locate`, ignoring
+whitespace and chat formatting marks), and title, company, location and link must appear in that
+slice or are dropped. Without consent a rule-based split is used.
 
 All AI features from AGENTS.md are now built (Phases 2, 4, 6 and 7).
 
@@ -138,8 +144,20 @@ proposes `Change`s, which the user must accept one by one.
    editor and never written into the resume.
 6. **Without AI** (no consent or provider), only rule-based reordering is offered.
 
-Output is a DOCX (python-docx: single column, standard headings, no tables) and a print page that
-uses the browser's "Save as PDF", which keeps every Unicode character and needs no PDF library.
+Downloads are built on the server and keep the format of the uploaded resume:
+
+- **PDF** (`tailoring/pdf_render.py`): the original PDF's layout is read with pdfplumber
+  (`resume/layout.py`: lines of styled pieces at their positions, rules, links). Unchanged lines
+  are redrawn where they were; only accepted changes (reworded bullets, bullet order, summary,
+  skill order) are re-wrapped in their paragraph's style, keeping its bold and italic phrases.
+  Fonts are Latin Modern (`app/assets/fonts`, GUST Font License), the open version of the LaTeX
+  font, with slight horizontal fitting for other fonts. No browser header or footer.
+- **DOCX** (`tailoring/docx_inplace.py`): a Word upload is edited in place (paragraphs matched by
+  text, runs rebuilt with the original formatting).
+- If the upload was plain text, or a change can't be located in the original (e.g. the profile's
+  bullet was edited by hand), a classic one-column template is used instead
+  (`render_template_pdf`, `docx_render.py`). The log records `resume_layout_fallback` with the kind
+  of change, never its text.
 
 ## Cover letters (Phase 7)
 

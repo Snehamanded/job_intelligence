@@ -61,23 +61,32 @@ class AdzunaConnector:
         self._max_jobs = max_jobs
 
     def fetch(self, query: SearchQuery, report: FetchReport) -> Iterator[RawPosting]:
-        countries = [c for c in query.targets if c in COUNTRIES]
+        # Targets are "identifier|display name", as stored in job_source_configs.
+        countries = [c for t in query.targets if (c := t.split("|")[0]) in COUNTRIES]
         if not countries:
             raise ConnectorError("No Adzuna country configured")
         yielded = 0
+        seen: set[str] = set()
+        # One query per role (all its words must match), at most 5 roles: few requests, and
+        # "AI Engineer" doesn't match every engineer.
+        terms = query.keywords[:5] or [""]
         for country in countries:
-            params = {**self._auth, "results_per_page": str(PER_PAGE), "max_days_old": "30",
-                      "content-type": "application/json"}  # fmt: skip
-            if query.keywords:
-                params["what_or"] = " ".join(query.keywords)
-            try:
-                data = get_json(self._client, f"{API}/{country}/search/1", self.label, params)
-            except ConnectorError as exc:
-                report.errors.append(f"{country}: {exc}")
-                continue
-            for job in (data.get("results") or []) if isinstance(data, dict) else []:
-                if isinstance(job, dict) and "id" in job and yielded < self._max_jobs:
-                    yielded += 1
-                    yield to_posting(job, country)
-        if len(report.errors) == len(countries):
+            for term in terms:
+                params = {**self._auth, "results_per_page": str(PER_PAGE), "max_days_old": "30",
+                          "content-type": "application/json"}  # fmt: skip
+                if term:
+                    params["what"] = term
+                try:
+                    data = get_json(self._client, f"{API}/{country}/search/1", self.label, params)
+                except ConnectorError as exc:
+                    report.errors.append(f"{country}: {exc}")
+                    continue
+                for job in (data.get("results") or []) if isinstance(data, dict) else []:
+                    if not isinstance(job, dict) or "id" not in job or str(job["id"]) in seen:
+                        continue
+                    if yielded < self._max_jobs:
+                        seen.add(str(job["id"]))
+                        yielded += 1
+                        yield to_posting(job, country)
+        if report.errors and len(report.errors) == len(countries) * len(terms):
             raise ConnectorError("; ".join(report.errors))

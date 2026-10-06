@@ -3,7 +3,14 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
-import { api, toApiError, type ScoringSettings, type SearchRun } from "@/lib/api/client";
+import {
+  api,
+  toApiError,
+  type ImportBatch,
+  type ImportChannel,
+  type ScoringSettings,
+  type SearchRun,
+} from "@/lib/api/client";
 
 export type JobFilters = {
   eligibleOnly: boolean;
@@ -128,7 +135,16 @@ export function useConnectors() {
 }
 
 export type NewJobSource = {
-  source: "greenhouse" | "lever" | "ashby" | "remoteok" | "remotive" | "adzuna";
+  source:
+    | "greenhouse"
+    | "lever"
+    | "ashby"
+    | "remoteok"
+    | "remotive"
+    | "weworkremotely"
+    | "jobspresso"
+    | "himalayas"
+    | "adzuna";
   identifier?: string;
   display_name?: string | null;
 };
@@ -263,4 +279,42 @@ export function useUpdateScoringConfig() {
       void queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
   });
+}
+
+export function useStartImport() {
+  return useMutation({
+    mutationFn: async (body: { channel: ImportChannel; text: string }) => {
+      const { data, error, response } = await api.POST("/api/job-imports", { body });
+      if (!data) throw toApiError(response.status, error);
+      return data;
+    },
+  });
+}
+
+const importRunning = (b: ImportBatch | undefined) =>
+  b?.status === "queued" || b?.status === "running";
+
+/** Polls an import until it finishes, then refreshes the job list. */
+export function useImportBatch(id: string | null) {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: ["job-imports", id],
+    enabled: id != null,
+    queryFn: async () => {
+      const { data, error, response } = await api.GET("/api/job-imports/{batch_id}", {
+        params: { path: { batch_id: id ?? "" } },
+      });
+      if (!data) throw toApiError(response.status, error);
+      return data;
+    },
+    refetchInterval: (q) => (importRunning(q.state.data) ? 1500 : false),
+  });
+  const done = query.data != null && !importRunning(query.data);
+  useEffect(() => {
+    if (done) {
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["match-status"] });
+    }
+  }, [done, queryClient]);
+  return query;
 }

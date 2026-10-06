@@ -12,7 +12,7 @@ from app.ai.providers import AIProvider
 from app.ai.schemas import TailorSuggestions, VerifyReport
 from app.ai.services.runner import LLMRunner, LLMTask
 from app.core.config import Settings
-from app.models import CandidateProfile, Job, ResumeVersion
+from app.models import CandidateProfile, Job, Resume, ResumeVersion
 from app.repositories.profiles import ProfileRepository
 from app.repositories.settings import SettingsRepository
 from app.schemas.profile import ProfileData
@@ -25,8 +25,13 @@ from app.schemas.tailoring import (
 from app.services.jobs.listing import JobListingService
 from app.services.matching.components import profile_skill_map
 from app.services.matching.skills import classify, find_skills
+from app.services.resume.layout import extract_layout
+from app.services.storage import FileStorage, get_storage
 from app.services.tailoring.checks import check_rewrite, check_summary_sentence
 from app.services.tailoring.document import apply, base_document, item_texts, role_text
+from app.services.tailoring.docx_inplace import tailor_docx
+from app.services.tailoring.docx_render import render_docx
+from app.services.tailoring.pdf_render import render_pdf
 from app.services.tailoring.rules import rule_changes
 
 logger = logging.getLogger(__name__)
@@ -77,12 +82,18 @@ def _ai_items(doc: ResumeDocument) -> dict[str, Any]:
 
 class TailoringService:
     def __init__(
-        self, session: Session, user_id: uuid.UUID, provider: AIProvider | None, settings: Settings
+        self,
+        session: Session,
+        user_id: uuid.UUID,
+        provider: AIProvider | None,
+        settings: Settings,
+        storage: FileStorage | None = None,
     ) -> None:
         self._session = session
         self._user_id = user_id
         self._provider = provider
         self._settings = settings
+        self._storage = storage or get_storage(settings)
 
     # --- lookups -------------------------------------------------------------------------
 
@@ -368,6 +379,40 @@ class TailoringService:
         version.changes = [c.model_dump(mode="json") for c in changes.values()]
         self._session.commit()
         return version
+
+    # --- downloads: in the format of the uploaded resume where possible ---------------------
+
+    def _original(self, version: ResumeVersion) -> tuple[str, bytes] | None:
+        profile = self._profile(version.profile_version)
+        if profile is None or profile.resume_id is None:
+            return None
+        resume = self._session.scalar(
+            select(Resume).where(Resume.id == profile.resume_id, Resume.user_id == self._user_id)
+        )
+        if resume is None:
+            return None
+        try:
+            return resume.file_type, self._storage.read(resume.storage_key)
+        except OSError:
+            return None
+
+    def pdf(self, version: ResumeVersion) -> bytes:
+        original = self._original(version)
+        layout = None
+        if original is not None and original[0] == "pdf":
+            layout = extract_layout(original[1], self._settings.max_resume_pages)
+        data, kept = render_pdf(layout, self.base(version), self.preview(version))
+        logger.info("resume_pdf_rendered", extra={"kept_format": kept})
+        return data
+
+    def docx(self, version: ResumeVersion) -> bytes:
+        original = self._original(version)
+        doc = self.preview(version)
+        if original is not None and original[0] == "docx":
+            edited = tailor_docx(original[1], self.base(version), doc)
+            if edited is not None:
+                return edited
+        return render_docx(doc)
 
     def preview(self, version: ResumeVersion) -> ResumeDocument:
         if version.status == "saved" and version.content:

@@ -37,7 +37,7 @@ FastAPI (apps/api, :8000) ── Postgres + pgvector (:5432 in Docker, :5433 on 
 | `services/jobs/` | Normalization, dedupe (`JobStore`), eligibility, search runs, manual import, listing |
 | `services/crm.py` | Applications, stage rules and history, notes, interviews, analytics |
 | `services/cover_letters/` | Sentence checks (claim, company, connective), template letter, AI draft and verification, DOCX |
-| `services/tailoring/` | Tailored document model, rule-based changes, truthfulness checks, AI suggestion and verification, DOCX rendering |
+| `services/tailoring/` | Tailored document model, rule-based changes, truthfulness checks, AI suggestion and verification, PDF and DOCX downloads in the uploaded resume's layout |
 | `services/matching/` | Skill vocabulary and status, score components, scoring config versions, LLM refinement, `MatchingService` |
 
 Request flow (users example): `api/routes/auth.py` → `services/auth.py` (`AuthService`) →

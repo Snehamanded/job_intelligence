@@ -68,6 +68,9 @@ limit: `AI_RATE_LIMIT` per `AI_RATE_WINDOW_SECONDS`. Account deletion shares the
   resolve outside its root.
 - Parsing runs in the worker, never in the request, with a hard RQ job timeout
   (`PARSE_JOB_TIMEOUT_SECONDS`). Failures store a short user-facing message, never a stack trace.
+- Downloading a tailored resume re-reads the user's own stored upload to keep its layout. Only
+  files that already parsed in the worker (with the same library, within the timeout) are stored,
+  the page limit applies again, and any error falls back to the template.
 - Downloads are served as `attachment` with `X-Content-Type-Options: nosniff` and
   `Cache-Control: private, no-store`.
 - Every resume query filters on `user_id`. Another user's resume returns `404`.
@@ -84,6 +87,18 @@ limit: `AI_RATE_LIMIT` per `AI_RATE_WINDOW_SECONDS`. Account deletion shares the
   keys as a backstop. Resume text must never be logged (enforced from Phase 2).
 - The test suite refuses to run against a database whose name does not end in `_test`.
 
+## Public deployment
+
+- `ENVIRONMENT=production` refuses to start without `COOKIE_SECURE=true` and either
+  `ALLOWED_SIGNUP_EMAILS` (only those addresses can register) or `ALLOW_REGISTRATION=false`, so a
+  public URL can't be used by others to spend the owner's AI and API allowances.
+- On Vercel, the website proxies `/api/*` to the API: the browser only sees one origin, so the
+  auth cookie is first-party and `SameSite=Lax` holds.
+- Uvicorn doesn't trust `X-Forwarded-For` there: it can be forged through the proxies, which would
+  let a client dodge the login rate limit. All requests share one limit bucket instead (fine for a
+  single user).
+- Secrets live only in the hosts' dashboards (`render.yaml` marks them `sync: false`).
+
 ## Privacy
 
 - Resume text is sent to a third-party LLM **only** when `settings.llm_consent` is on (off by
@@ -93,6 +108,9 @@ limit: `AI_RATE_LIMIT` per `AI_RATE_WINDOW_SECONDS`. Account deletion shares the
   resumes with extracted text, every profile version and LLM usage. It never includes the password hash.
 - `DELETE /api/me` requires the password. It deletes the user row, which cascades to every
   user-owned table, deletes the user's stored files and clears the session.
+- Pasted alert emails and WhatsApp exports are untrusted data: quoted to the LLM as data, with
+  sender names and numbers stripped first, and the pasted text is deleted once processed. Results
+  (titles, companies, links) are kept and included in the export.
 - Resume text is never logged. Log events carry IDs, counts and durations only.
 - Personal files (resume PDFs) are git-ignored and must never be committed or used as test
   fixtures. The test resumes are fictional.

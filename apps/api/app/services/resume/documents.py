@@ -4,10 +4,13 @@ import io
 import zipfile
 from dataclasses import dataclass
 from pathlib import PurePath
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from app.core.config import Settings
 from app.utils.text import normalize_text
+
+if TYPE_CHECKING:
+    from docx.text.paragraph import Paragraph
 
 FileType = Literal["pdf", "docx", "txt"]
 
@@ -119,6 +122,15 @@ def _extract_pdf(data: bytes, max_pages: int) -> tuple[str, int]:
         raise
     except (PdfReadError, ValueError, KeyError, TypeError, OSError) as exc:
         raise ExtractionError("The PDF could not be read. It may be damaged.") from exc
+    # Prefer text rebuilt from the layout: pypdf drops the spaces LaTeX leaves implicit where the
+    # font changes ("Built aCRM call"). Fall back to pypdf when the layout can't be read.
+    from app.services.resume.layout import extract_layout, layout_text
+
+    layout = extract_layout(data, max_pages)
+    if layout is not None:
+        rebuilt = layout_text(layout)
+        if len(rebuilt.strip()) >= max(50, len(text.strip()) // 2):
+            text = rebuilt
     return text, page_count
 
 
@@ -131,7 +143,7 @@ def _extract_docx(data: bytes, max_uncompressed: int) -> str:
         document = docx.Document(io.BytesIO(data))
     except (PackageNotFoundError, KeyError, ValueError, zipfile.BadZipFile) as exc:
         raise ExtractionError("The DOCX file could not be read. It may be damaged.") from exc
-    parts = [p.text for p in document.paragraphs]
+    parts = [_docx_line(p) for p in document.paragraphs]
     for table in document.tables:
         for row in table.rows:
             cells: list[str] = []
@@ -140,6 +152,17 @@ def _extract_docx(data: bytes, max_uncompressed: int) -> str:
                     cells.append(cell.text)
             parts.append(" | ".join(cells))
     return "\n".join(parts)
+
+
+def _docx_line(paragraph: "Paragraph") -> str:
+    """Word bullets are list formatting, not characters: mark them so bullets are recognized."""
+    text = paragraph.text
+    style = (paragraph.style.name if paragraph.style is not None else "") or ""
+    p_pr = paragraph._p.pPr
+    listed = (p_pr is not None and p_pr.numPr is not None) or "list" in style.lower()
+    if listed and text.strip() and not text.lstrip().startswith(("•", "-", "*", "–")):
+        return f"• {text.strip()}"
+    return text
 
 
 def _decode_text(data: bytes) -> str:

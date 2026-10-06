@@ -97,9 +97,10 @@ export function ImportForm({ onImport, pending = false, error }: Props) {
             placeholder="https://jobs.lever.co/company/… or a company careers page"
           />
           <p className="text-xs text-muted-foreground">
-            Greenhouse, Lever and Ashby links are read through their APIs; other career pages are
-            read from their published job data. LinkedIn, Naukri, Indeed and similar sites
-            don&apos;t allow automated access: copy the description into the other tab instead.
+            Greenhouse, Lever and Ashby links are read through their APIs; other career pages
+            (Workday, SmartRecruiters, iCIMS, Taleo, SuccessFactors, company sites) are read from
+            their published job data. LinkedIn, Naukri, Indeed and similar sites don&apos;t allow
+            automated access: copy the description into the other tab instead.
           </p>
         </div>
       ) : (

@@ -138,7 +138,6 @@ class GreenhouseConnector:
         boards = boards[: self._max_boards]
         if not boards:
             raise ConnectorError("No Greenhouse boards configured")
-        yielded = 0
         failures = 0
         for i, token in enumerate(boards):
             if i:
@@ -154,11 +153,8 @@ class GreenhouseConnector:
                 failures += 1
                 report.errors.append(f"{token}: unexpected response")
                 continue
-            for job in jobs:
-                if yielded >= self._max_jobs:
-                    return
-                if isinstance(job, dict) and "id" in job:
-                    yielded += 1
-                    yield to_posting(job, token, token)
+            # The cap is per board, so one large company can't crowd out the others.
+            for job in [j for j in jobs if isinstance(j, dict) and "id" in j][: self._max_jobs]:
+                yield to_posting(job, token, token)
         if failures == len(boards):
             raise ConnectorError("; ".join(report.errors))

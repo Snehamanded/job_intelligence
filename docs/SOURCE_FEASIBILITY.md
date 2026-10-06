@@ -20,11 +20,11 @@ These are the best real sources: they list jobs first, with no stale reposts, an
 | Greenhouse | A | Public Job Board API per company board token (`boards-api.greenhouse.io`) | Unauthenticated GET for published jobs. **Built in Phase 3** | 2026-10-05: docs confirm unauthenticated GET for list/job/board; robots.txt disallows only `/embed/`; no published rate limit (we pause 1s between boards, cap 25 boards). Pay usually in description text; `pay_input_ranges` often empty. See `docs/CONNECTORS.md` |
 | Lever | A | Public Postings API per company (`api.lever.co/v0/postings/{company}`) | JSON output. **Built in Phase 8** | 2026-10-06: docs (github.com/lever/postings-api) confirm unauthenticated GET of published postings, `mode=json`, skip/limit; robots.txt `Allow: /`, `Crawl-delay: 1`. No company name in payload; `salaryRange` optional |
 | Ashby | A | Public job posting API per job board name | JSON output. **Built in Phase 8** | 2026-10-06: docs (developers.ashbyhq.com) confirm public `GET /posting-api/job-board/{name}?includeCompensation=true`; no stated rate limits (we pause 1s); robots.txt not served. Compensation used only when `shouldDisplayCompensationOnJobPostings` is true |
-| SmartRecruiters | **C** (was A) | Posting API is documented, but `api.smartrecruiters.com/robots.txt` disallows all agents except LinkedInBot | Mock + manual import (career-page structured data) | 2026-10-06: robots.txt `User-agent: * Disallow: /`; only LinkedInBot allowed `/v1/companies/`. Not built as a real connector |
-| Workday | B/C | No official public API. Career sites use internal JSON endpoints that differ per tenant | Undocumented, may break or be restricted per tenant. Defer; review terms per company before using | |
-| iCIMS | B | Per-tenant. Some expose feeds or JSON-LD | No uniform API | |
-| Taleo | B | Per-tenant, inconsistent | Low priority | |
-| SAP SuccessFactors | B | Per-tenant, inconsistent | Low priority | |
+| SmartRecruiters | **C** API / B pages | Posting API is documented, but `api.smartrecruiters.com/robots.txt` disallows all agents except LinkedInBot | No search connector. **Job pages (jobs.smartrecruiters.com) importable by link** via their JobPosting data | 2026-10-06: API robots.txt `User-agent: * Disallow: /`; jobs.smartrecruiters.com serves no robots.txt, so single-page import is allowed. API host is on the no-fetch list |
+| Workday | B (import only) | No official public API. Career sites use internal JSON endpoints that differ per tenant | Internal endpoints not used. **Import a job page by link**; robots.txt checked per tenant at import time; labeled "Workday" | 2026-10-06 |
+| iCIMS | B (import only) | Per-tenant. Some expose JSON-LD | **Import by link** when the page publishes JobPosting data and robots.txt allows; labeled "iCIMS" | 2026-10-06 |
+| Taleo | B (import only) | Per-tenant, inconsistent | **Import by link** as above; otherwise paste the description | 2026-10-06 |
+| SAP SuccessFactors | B (import only) | Per-tenant, inconsistent | **Import by link** as above; otherwise paste the description | 2026-10-06 |
 | Custom career pages | B | `JobPosting` JSON-LD (schema.org), sitemap.xml, RSS | Generic structured-data adapter. Check robots.txt first. **Phase 8: single-URL import** (robots.txt checked, SSRF-guarded); no crawling | 2026-10-06 |
 
 ## Remote job boards
@@ -32,10 +32,10 @@ These are the best real sources: they list jobs first, with no stale reposts, an
 | Source | Tier | Access | Notes | Verified |
 |---|---|---|---|---|
 | Remote OK | A | Public JSON API | Terms ask for attribution/link-back to the listing. Honor it. **Built in Phase 8** | 2026-10-06: robots.txt allows `/` (`Crawl-delay: 1`). API legal notice: link back to the Remote OK URL **without nofollow**, name Remote OK as source, don't use the logo. We: link without nofollow, show "via Remote OK", no logo, fetch at most hourly |
-| We Work Remotely | B | RSS feeds by category | Link back to source | |
+| We Work Remotely | B | Public RSS (`/remote-jobs.rss`) | Link back to source. **Built** | 2026-10-06: robots.txt allows the feed; terms page returned 403 (not read). One feed request per search, at most hourly; link back + "via We Work Remotely" |
 | Remotive | A | Public API | Documented request-rate guidance and attribution. Cache aggressively. **Built in Phase 8** | 2026-10-06: github.com/remotive-com/remote-jobs-api: link back + mention Remotive; >2 req/min blocked; recommends ≤4 queries/day; jobs delayed 24h; don't resubmit to other job boards. robots.txt is behind a Cloudflare challenge (not read, not bypassed); API endpoint answers normally. We fetch at most once per 6h per user |
-| Himalayas | A/B | Public API or feed (confirm) | Verify availability and terms | |
-| Jobspresso | B | RSS (confirm) | Verify | |
+| Himalayas | A | Public JSON API (`himalayas.app/jobs/api/search`) | Link back + name Himalayas; don't resubmit to other boards. **Built** | 2026-10-06: docs allow use with link back and attribution; data refreshes daily; 20 per page. We search roles open to India, ≤3 pages × ≤3 keywords, at most every 6h |
+| Jobspresso | B | Public RSS (`/jobs/feed/`) | **Built** | 2026-10-06: robots.txt disallows `/*?` (so no query-string feed) with Crawl-delay 3; `/jobs/feed/` allowed; terms say nothing on feeds. One request per search, at most hourly |
 
 ## Aggregator APIs (not in the original spec, worth evaluating)
 
@@ -56,7 +56,7 @@ These give broad coverage, including India, without scraping job boards. Most ne
 | Indeed | C | Public job-search API not generally available; terms restrict automated access | Mock + manual import. Revisit only with an official partner agreement |
 | Glassdoor | C | API closed to new partners; restrictive terms | Mock + manual import |
 | ZipRecruiter | C | Partner/affiliate access | Mock until you have partner access |
-| Google Jobs | C | No public search API. (Google's Talent API is for employers.) | Don't scrape results. Instead read `JobPosting` JSON-LD from company pages, which is what Google Jobs itself indexes |
+| Google Jobs | C | No public search API. (Google's Talent API is for employers.) | Never fetched (google.com is on the no-fetch list). Import the company's own job page by link instead: its JobPosting JSON-LD is what Google Jobs indexes |
 
 ## India boards
 

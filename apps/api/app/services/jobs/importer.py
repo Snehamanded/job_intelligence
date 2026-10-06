@@ -20,8 +20,24 @@ NO_FETCH_DOMAINS = {
     "foundit.in": "Foundit", "shine.com": "Shine", "apna.co": "Apna", "wellfound.com": "Wellfound",
     "instahyre.com": "Instahyre", "cutshort.io": "Cutshort", "hirist.tech": "Hirist",
     "hirist.com": "Hirist", "ziprecruiter.com": "ZipRecruiter",
-    "smartrecruiters.com": "SmartRecruiters",
+    "google.com": "Google", "api.smartrecruiters.com": "SmartRecruiters' API",
 }  # fmt: skip
+
+
+# Career-portal platforms recognized from the page's host, to label imported jobs.
+PLATFORM_HOSTS = {
+    "myworkdayjobs.com": "workday", "myworkdaysite.com": "workday",
+    "smartrecruiters.com": "smartrecruiters", "icims.com": "icims", "taleo.net": "taleo",
+    "successfactors.com": "successfactors", "successfactors.eu": "successfactors",
+}  # fmt: skip
+
+
+def platform_of(url: str) -> str:
+    host = (urlsplit(url).hostname or "").lower()
+    for domain, platform in PLATFORM_HOSTS.items():
+        if host == domain or host.endswith("." + domain):
+            return platform
+    return "careers"
 
 
 def restricted_site(url: str) -> str | None:
@@ -65,14 +81,16 @@ class JobImporter:
         return self._save(posting)
 
     def _from_career_page(self, url: str) -> RawPosting:
-        final_url, html = self._connectors.fetcher.fetch_page(url)
+        final_url, html = self._connectors.fetcher.fetch_page(url, refuse=restricted_site)
         jobs = jsonld.find_job_postings(html)
         if not jobs:
             raise ImportRejectedError(
                 "This page doesn't publish job details in a standard format. "
                 "Paste the job description instead."
             )
-        return jsonld.to_posting(jobs[0], final_url)
+        posting = jsonld.to_posting(jobs[0], final_url)
+        posting.source = platform_of(final_url)
+        return posting
 
     def from_text(
         self, *, title: str, company: str, location: str, description: str, url: str | None

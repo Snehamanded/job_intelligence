@@ -97,3 +97,4 @@ export function useDeleteVersion() {
 }
 
 export const docxUrl = (id: string) => `${API_URL}/api/tailoring/${id}/docx`;
+export const pdfUrl = (id: string) => `${API_URL}/api/tailoring/${id}/pdf`;

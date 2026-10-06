@@ -1,0 +1,40 @@
+# Render Blueprint: the API and its background worker as ONE free web service.
+# Database (Neon) and Redis (Upstash) are external free services. See docs/DEPLOYMENT.md.
+services:
+  - type: web
+    name: jobcrm-api
+    runtime: docker
+    plan: free
+    dockerfilePath: infrastructure/docker/api.Dockerfile
+    dockerContext: .
+    dockerCommand: ./scripts/start-all.sh
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: STORAGE_BACKEND
+        value: database
+      - key: WORKER_NO_FORK # 512 MB: no extra process per job
+        value: "true"
+      - key: JOB_RETENTION_DAYS
+        value: "45"
+      - key: JWT_SECRET
+        generateValue: true
+      # Filled in on the Render dashboard (never committed):
+      - key: DATABASE_URL # Neon connection string
+        sync: false
+      - key: REDIS_URL # Upstash rediss:// URL
+        sync: false
+      - key: ALLOWED_SIGNUP_EMAILS # your email
+        sync: false
+      - key: CORS_ORIGINS # your Vercel site, e.g. https://jobcrm.vercel.app
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADZUNA_APP_ID
+        sync: false
+      - key: ADZUNA_APP_KEY
+        sync: false

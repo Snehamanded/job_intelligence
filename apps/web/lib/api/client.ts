@@ -14,6 +14,8 @@ export type Experience = components["schemas"]["Experience"];
 export type JobSummary = components["schemas"]["JobSummary"];
 export type JobDetail = components["schemas"]["JobDetail"];
 export type SearchRun = components["schemas"]["SearchRunRead"];
+export type ImportBatch = components["schemas"]["ImportBatchRead"];
+export type ImportChannel = components["schemas"]["ImportBatchCreate"]["channel"];
 export type SourceResult = components["schemas"]["SourceResult"];
 export type JobSource = components["schemas"]["JobSourceRead"];
 export type Connector = components["schemas"]["ConnectorRead"];
@@ -38,7 +40,11 @@ export type CoverLetterDetail = components["schemas"]["CoverLetterDetail"];
 export type LetterParagraph = components["schemas"]["Paragraph"];
 export type LetterSentence = components["schemas"]["Sentence"];
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// "/" means same origin: the API is proxied under /api (see next.config.ts).
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
+  /\/+$/,
+  "",
+);
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 

@@ -54,7 +54,7 @@ def get_csrf_token(request: Request, response: Response, settings: AppSettings) 
 def register(
     body: RegisterRequest, response: Response, db: DbSession, settings: AppSettings
 ) -> AuthResponse:
-    if not settings.allow_registration:
+    if not settings.allow_registration or not settings.signup_allowed(body.email):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Registration is disabled")
     try:
         user = AuthService(db).register(body.email, body.password)

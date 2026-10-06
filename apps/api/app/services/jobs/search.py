@@ -75,7 +75,10 @@ class SearchService:
         ran = [r for r in results if r["status"] != "skipped"]
         run.status = "failed" if ran and all(r["status"] == "failed" for r in ran) else "completed"
         if not ran:
-            run.error_message = "No sources are configured. Add a Greenhouse board first."
+            run.error_message = (
+                "No sources are switched on. Turn on a remote feed or add a company board "
+                "on the Sources page."
+            )
         run.finished_at = datetime.now(UTC)
         self._session.commit()
         logger.info(

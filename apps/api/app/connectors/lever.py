@@ -105,12 +105,12 @@ class LeverConnector:
         sites = [t for t in query.targets if SLUG_RE.fullmatch(t.split("|")[0])]
         if not sites:
             raise ConnectorError("No Lever companies configured")
-        yielded = failures = 0
+        failures = 0
         first = True
         for target in sites:
             site, _, company = target.partition("|")
             company = company or site.title()
-            skip = 0
+            skip = yielded = 0  # the cap is per company
             while yielded < self._max_jobs:
                 if not first:
                     self._sleep(self._delay)

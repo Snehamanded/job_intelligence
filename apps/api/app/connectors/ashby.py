@@ -116,7 +116,7 @@ class AshbyConnector:
         boards = [t for t in query.targets if SLUG_RE.fullmatch(t.split("|")[0])]
         if not boards:
             raise ConnectorError("No Ashby boards configured")
-        yielded = failures = 0
+        failures = 0
         for i, target in enumerate(boards):
             board, _, company = target.partition("|")
             if i:
@@ -127,10 +127,7 @@ class AshbyConnector:
                 failures += 1
                 report.errors.append(f"{board}: {exc}")
                 continue
-            for job in jobs:
-                if yielded >= self._max_jobs:
-                    return
-                yielded += 1
+            for job in jobs[: self._max_jobs]:  # the cap is per board
                 yield to_posting(job, board, company or board.title())
         if failures == len(boards):
             raise ConnectorError("; ".join(report.errors))

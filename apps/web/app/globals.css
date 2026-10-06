@@ -61,8 +61,10 @@
 }
 
 @media print {
+  /* No page margin leaves browsers no room for their header and footer (date, URL, title);
+     the printable pages pad themselves instead. */
   @page {
-    margin: 16mm;
+    margin: 0;
   }
   body {
     background: white;

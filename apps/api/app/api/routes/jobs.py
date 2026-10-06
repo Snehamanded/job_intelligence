@@ -14,7 +14,7 @@ from app.api.deps import (
     search_rate_limit,
 )
 from app.connectors.registry import describe
-from app.models import Job, SearchRun
+from app.models import ImportBatch, Job, SearchRun
 from app.repositories.profiles import ProfileRepository
 from app.repositories.settings import SettingsRepository
 from app.schemas.errors import ErrorResponse
@@ -22,6 +22,8 @@ from app.schemas.jobs import (
     ApplicationRef,
     ConnectorRead,
     EligibilityRead,
+    ImportBatchCreate,
+    ImportBatchRead,
     JobDetail,
     JobImportRequest,
     JobListResponse,
@@ -39,6 +41,7 @@ from app.schemas.matching import (
     ScoringConfigRead,
 )
 from app.services.job_sources import JobSourceService, SourceConfigError
+from app.services.jobs.bulk_import import clean, limit
 from app.services.jobs.importer import ImportRejectedError, JobImporter
 from app.services.jobs.listing import JobListingService, ListedJob
 from app.services.matching.config import ScoringConfigService, ScoringSettings
@@ -92,9 +95,11 @@ def list_connectors(_: CurrentUser, settings: AppSettings) -> list[ConnectorRead
 
 @router.get("/job-sources", response_model=list[JobSourceRead])
 def list_job_sources(
-    user: CurrentUser, db: DbSession, settings: AppSettings
+    user: CurrentUser, db: DbSession, settings: AppSettings, connectors: JobConnectors
 ) -> list[JobSourceRead]:
-    return [JobSourceRead.model_validate(c) for c in JobSourceService(db, user.id, settings).list()]
+    service = JobSourceService(db, user.id, settings)
+    service.ensure_defaults(connectors)
+    return [JobSourceRead.model_validate(c) for c in service.list()]
 
 
 @router.post(
@@ -143,8 +148,14 @@ def delete_job_source(
     dependencies=[Depends(search_rate_limit)],
 )
 def start_search(
-    body: SearchRunCreate, user: CurrentUser, db: DbSession, queue: Queue
+    body: SearchRunCreate,
+    user: CurrentUser,
+    db: DbSession,
+    queue: Queue,
+    settings: AppSettings,
+    connectors: JobConnectors,
 ) -> SearchRunRead:
+    JobSourceService(db, user.id, settings).ensure_defaults(connectors)
     keywords = body.keywords
     if keywords is None:
         profile = ProfileRepository(db).current(user.id)
@@ -241,6 +252,52 @@ def import_job(
     if item is None:  # just saved; only possible if deleted concurrently
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
     return _detail(item)
+
+
+@router.post(
+    "/job-imports",
+    response_model=ImportBatchRead,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(search_rate_limit)],
+)
+def start_import(
+    body: ImportBatchCreate, user: CurrentUser, db: DbSession, queue: Queue
+) -> ImportBatchRead:
+    """Find the job posts in pasted alert emails or WhatsApp messages and import them."""
+    text, truncated = limit(clean(body.text), body.channel)
+    batch = ImportBatch(user_id=user.id, channel=body.channel, status="queued", pasted_text=text)
+    if truncated:
+        batch.notice = (
+            "Only the most recent messages were imported (the text was too long)."
+            if body.channel == "whatsapp"
+            else "Only the start of the text was imported (it was too long)."
+        )
+    db.add(batch)
+    db.commit()
+    queue.enqueue_import(user.id, batch.id)
+    db.refresh(batch)
+    return ImportBatchRead.model_validate(batch)
+
+
+@router.get("/job-imports", response_model=list[ImportBatchRead])
+def list_imports(user: CurrentUser, db: DbSession) -> list[ImportBatchRead]:
+    batches = db.scalars(
+        select(ImportBatch)
+        .where(ImportBatch.user_id == user.id)
+        .order_by(ImportBatch.created_at.desc())
+        .limit(10)
+    )
+    return [ImportBatchRead.model_validate(b) for b in batches]
+
+
+@router.get("/job-imports/{batch_id}", response_model=ImportBatchRead, responses=NOT_FOUND)
+def get_import(batch_id: uuid.UUID, user: CurrentUser, db: DbSession) -> ImportBatchRead:
+    batch = db.scalar(
+        select(ImportBatch).where(ImportBatch.id == batch_id, ImportBatch.user_id == user.id)
+    )
+    if batch is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Import not found")
+    return ImportBatchRead.model_validate(batch)
 
 
 @router.get("/jobs/{job_id}", response_model=JobDetail, responses=NOT_FOUND)

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.connectors.adzuna import COUNTRIES
 from app.connectors.base import ConnectorError
-from app.connectors.registry import BOARD_SOURCES, TOGGLE_SOURCES, Connectors
+from app.connectors.registry import BOARD_SOURCES, TOGGLE_IDENTIFIERS, TOGGLE_SOURCES, Connectors
 from app.core.config import Settings
 from app.models import JobSourceConfig
 
@@ -59,7 +59,13 @@ class JobSourceService:
                 raise SourceConfigError(f"Could not add '{identifier}': {exc}") from exc
             name = (display_name or "").strip() or name
         elif source in TOGGLE_SOURCES:
-            identifier, name = "*", source
+            identifier, name = TOGGLE_IDENTIFIERS.get(source, "*"), source
+            # A switched-off feed keeps its row (so defaults don't switch it back on).
+            existing = next((c for c in self.list() if c.source == source), None)
+            if existing is not None and not existing.enabled:
+                existing.enabled = True
+                self._session.commit()
+                return existing
         elif source == "adzuna":
             if connectors.adzuna is None:
                 raise SourceConfigError("Adzuna isn't configured on this server.")
@@ -80,5 +86,34 @@ class JobSourceService:
         return config
 
     def delete(self, config: JobSourceConfig) -> None:
-        self._session.delete(config)
+        if config.source in TOGGLE_SOURCES:
+            config.enabled = False
+        else:
+            self._session.delete(config)
         self._session.commit()
+
+    def ensure_defaults(self, connectors: Connectors) -> None:
+        """On first use, switch on the default sources so a search works without any setup."""
+        if not self._settings.default_sources_enabled or self._session.scalar(
+            select(JobSourceConfig.id).where(JobSourceConfig.user_id == self._user_id).limit(1)
+        ):
+            return
+        rows = [(s, TOGGLE_IDENTIFIERS.get(s, "*"), s) for s in TOGGLE_SOURCES]
+        if connectors.adzuna is not None:
+            rows.append(("adzuna", "in", "Adzuna (IN)"))
+        boards = []
+        for entry in self._settings.starter_company_boards.split(","):
+            source, _, rest = entry.strip().partition(":")
+            identifier, _, name = rest.partition(":")
+            if source in BOARD_SOURCES and identifier:
+                boards.append((source, identifier, name or identifier.title()))
+        rows += boards[: self._settings.max_job_boards]
+        self._session.add_all(
+            JobSourceConfig(user_id=self._user_id, source=source, identifier=identifier,
+                            display_name=name[:200], enabled=True)
+            for source, identifier, name in rows
+        )  # fmt: skip
+        try:
+            self._session.commit()
+        except IntegrityError:
+            self._session.rollback()  # another request seeded them first

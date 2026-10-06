@@ -18,7 +18,7 @@ from app.core.security import (
 )
 from app.models import User
 from app.repositories.users import UserRepository
-from app.services.storage import LocalFileStorage, get_storage
+from app.services.storage import FileStorage, get_storage
 from app.workers.queue import RQTaskQueue, TaskQueue
 
 DbSession = Annotated[Session, Depends(get_db)]
@@ -82,7 +82,7 @@ def ai_rate_limit(user: CurrentUser, redis: RedisClient, settings: AppSettings) 
         )
 
 
-def get_file_storage(settings: AppSettings) -> LocalFileStorage:
+def get_file_storage(settings: AppSettings) -> FileStorage:
     return get_storage(settings)
 
 
@@ -90,7 +90,7 @@ def get_task_queue(redis: RedisClient, settings: AppSettings) -> TaskQueue:
     return RQTaskQueue(redis, settings)
 
 
-Storage = Annotated[LocalFileStorage, Depends(get_file_storage)]
+Storage = Annotated[FileStorage, Depends(get_file_storage)]
 Queue = Annotated[TaskQueue, Depends(get_task_queue)]
 
 

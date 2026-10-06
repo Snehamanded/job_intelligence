@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.ai.providers import get_ai_provider
-from app.api.deps import AppSettings, CurrentUser, DbSession, Queue, ai_rate_limit
+from app.api.deps import AppSettings, CurrentUser, DbSession, Queue, Storage, ai_rate_limit
 from app.models import ResumeVersion
 from app.schemas.errors import ErrorResponse
 from app.schemas.tailoring import (
@@ -15,7 +15,6 @@ from app.schemas.tailoring import (
     TailoringSave,
     TailoringSummary,
 )
-from app.services.tailoring.docx_render import render_docx
 from app.services.tailoring.service import TailoringError, TailoringService
 
 router = APIRouter(tags=["tailoring"])
@@ -26,8 +25,10 @@ ERRORS: dict[int | str, dict[str, Any]] = {
 }
 
 
-def _service(db: DbSession, user: CurrentUser, settings: AppSettings) -> TailoringService:
-    return TailoringService(db, user.id, get_ai_provider(settings), settings)
+def _service(
+    db: DbSession, user: CurrentUser, settings: AppSettings, storage: Storage
+) -> TailoringService:
+    return TailoringService(db, user.id, get_ai_provider(settings), settings, storage)
 
 
 Service = Depends(_service)
@@ -129,10 +130,31 @@ def download_docx(version_id: uuid.UUID, service: TailoringService = Service) ->
         raise HTTPException(status.HTTP_409_CONFLICT, "Save this version before downloading it.")
     filename = re.sub(r"[^A-Za-z0-9]+", "-", version.name).strip("-")[:80] or "resume"
     return Response(
-        content=render_docx(service.preview(version)),
+        content=service.docx(version),
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}.docx"',
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.get(
+    "/tailoring/{version_id}/pdf",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}, **ERRORS},
+)
+def download_pdf(version_id: uuid.UUID, service: TailoringService = Service) -> Response:
+    """Built on the server, so there's no browser header or footer; keeps the upload's layout."""
+    version = _own(service, version_id)
+    if version.status != "saved":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Save this version before downloading it.")
+    filename = re.sub(r"[^A-Za-z0-9]+", "-", version.name).strip("-")[:80] or "resume"
+    return Response(
+        content=service.pdf(version),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}.pdf"',
             "Cache-Control": "private, no-store",
         },
     )

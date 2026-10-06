@@ -32,6 +32,15 @@ _FICTIONAL = {
 }  # fmt: skip
 
 
+# Every other Tier C source gets the same two fictional roles, labeled with its name.
+_GENERIC = [
+    ("Software Engineer", "Mock {label} Employer", "Bengaluru, India",
+     "Fictional posting for development. Python and SQL. 1-3 years of experience. Full-time."),
+    ("Data Analyst", "Mock {label} Startup", "Remote, India",
+     "Fictional posting for development. SQL and Excel. 2+ years of experience. Full-time."),
+]  # fmt: skip
+
+
 class MockConnector:
     tier: Tier = "C"
     is_mock = True
@@ -42,7 +51,10 @@ class MockConnector:
         self.label = label
 
     def fetch(self, query: SearchQuery, report: FetchReport) -> Iterator[RawPosting]:
-        for i, (title, company, location, description) in enumerate(_FICTIONAL.get(self.name, [])):
+        rows = _FICTIONAL.get(self.name) or [
+            (t, c.format(label=self.label), loc, d) for t, c, loc, d in _GENERIC
+        ]
+        for i, (title, company, location, description) in enumerate(rows):
             yield RawPosting(
                 source=self.name,
                 source_job_id=f"mock-{self.name}-{i}",

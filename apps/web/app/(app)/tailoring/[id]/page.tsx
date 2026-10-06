@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Download, Loader2, Printer } from "lucide-react";
+import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import {
   docxUrl,
+  pdfUrl,
   useDecide,
   useDeleteVersion,
   useSaveVersion,
@@ -146,15 +147,19 @@ export default function TailoringVersionPage() {
             {saved ? (
               <div className="flex flex-wrap gap-2">
                 <Button asChild>
+                  <a href={pdfUrl(v.id)}>
+                    <Download /> Download PDF
+                  </a>
+                </Button>
+                <Button variant="outline" asChild>
                   <a href={docxUrl(v.id)}>
                     <Download /> Download DOCX
                   </a>
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href={`/print/tailoring/${v.id}`} target="_blank">
-                    <Printer /> Print or save as PDF
-                  </Link>
-                </Button>
+                <p className="basis-full text-xs text-muted-foreground">
+                  Downloads keep the layout of the resume you uploaded (PDF or Word). A resume
+                  uploaded as plain text gets a classic one-column layout.
+                </p>
               </div>
             ) : (
               <form

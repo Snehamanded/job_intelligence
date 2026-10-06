@@ -120,7 +120,8 @@ def test_adzuna_ignores_predicted_salary() -> None:
     adzuna = AdzunaConnector(
         make_client(get_settings(), greenhouse_transport()), app_id="id", app_key="key"
     )
-    jobs = {j.title: j for j in jobs_of(adzuna, ["in"], ["Backend Engineer"])}
+    # Searches pass targets as stored: "identifier|display name".
+    jobs = {j.title: j for j in jobs_of(adzuna, ["in|Adzuna (IN)"], ["Backend Engineer"])}
     real = jobs["Backend Engineer (Python)"]
     assert real.salary is not None
     assert (real.salary.min, real.salary.currency, real.location.cities) == (
@@ -177,7 +178,11 @@ def test_public_url_allowed() -> None:
 def test_restricted_sites() -> None:
     assert restricted_site("https://www.linkedin.com/jobs/view/1") == "LinkedIn"
     assert restricted_site("https://in.indeed.com/viewjob?jk=1") == "Indeed"
-    assert restricted_site("https://jobs.smartrecruiters.com/Acme/1") == "SmartRecruiters"
+    assert (
+        restricted_site("https://jobs.smartrecruiters.com/Acme/1") is None
+    )  # pages: no robots.txt
+    assert restricted_site("https://api.smartrecruiters.com/v1/companies/x") is not None
+    assert restricted_site("https://www.google.com/search?q=jobs") == "Google"
     assert restricted_site("https://notlinkedin.com/jobs") is None
 
 
@@ -301,7 +306,7 @@ def test_sources_config_and_rate_intervals(client: TestClient) -> None:
         connectors["remoteok"]["config"] == "toggle"
         and "Remote OK" in connectors["remoteok"]["attribution"]
     )
-    assert connectors["smartrecruiters"]["kind"] == "manual_only"
+    assert connectors["smartrecruiters"]["kind"] == "import"
     assert connectors["adzuna"]["enabled"] is False
 
 
@@ -322,3 +327,15 @@ def test_same_description_in_different_cities_is_not_a_duplicate(client: TestCli
     assert nyc["id"] != london["id"]  # two openings
     again = post("New York, NY", company="Acme")
     assert again["id"] == nyc["id"]  # identical posting: same job
+
+
+def test_adzuna_queries_each_role_and_merges_results() -> None:
+    requests: list[httpx.Request] = []
+    adzuna = AdzunaConnector(
+        make_client(get_settings(), greenhouse_transport(requests=requests)),
+        app_id="id", app_key="key",
+    )  # fmt: skip
+    jobs = jobs_of(adzuna, ["in|Adzuna (IN)"], ["Backend Engineer", "Python Developer"])
+    assert [r.url.params["what"] for r in requests] == ["Backend Engineer", "Python Developer"]
+    ids = [j.source_job_id for j in jobs]
+    assert len(ids) == len(set(ids))  # the same posting from both queries is kept once

@@ -316,6 +316,44 @@ export interface paths {
         patch: operations["update_interview"];
         trace?: never;
     };
+    "/api/job-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Imports */
+        get: operations["list_imports"];
+        put?: never;
+        /**
+         * Start Import
+         * @description Find the job posts in pasted alert emails or WhatsApp messages and import them.
+         */
+        post: operations["start_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/job-imports/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import */
+        get: operations["get_import"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/job-sources": {
         parameters: {
             query?: never;
@@ -743,6 +781,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tailoring/{version_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Pdf
+         * @description Built on the server, so there's no browser header or footer; keeps the upload's layout.
+         */
+        get: operations["download_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tailoring/{version_id}/save": {
         parameters: {
             query?: never;
@@ -1091,6 +1149,11 @@ export interface components {
             /** Attribution */
             attribution: string | null;
             /**
+             * Category
+             * @enum {string}
+             */
+            category: "general" | "india" | "startup" | "remote" | "ats";
+            /**
              * Config
              * @enum {string}
              */
@@ -1101,7 +1164,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "real" | "mock" | "manual_only";
+            kind: "real" | "import" | "mock" | "manual_only";
             /** Label */
             label: string;
             /** Name */
@@ -1500,6 +1563,70 @@ export interface components {
              */
             status: "ok" | "degraded";
         };
+        /**
+         * ImportBatchCreate
+         * @description Pasted job alert emails, or WhatsApp messages (copied, or a chat export file's text).
+         */
+        ImportBatchCreate: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "email" | "whatsapp" | "other";
+            /** Text */
+            text: string;
+        };
+        /** ImportBatchRead */
+        ImportBatchRead: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "email" | "whatsapp" | "other";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error Message */
+            error_message: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Method */
+            method: ("ai" | "rules") | null;
+            /** Notice */
+            notice: string | null;
+            /** Results */
+            results: components["schemas"]["ImportPostResult"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "completed" | "failed";
+        };
+        /** ImportPostResult */
+        ImportPostResult: {
+            /** Company */
+            company?: string | null;
+            /** Job Id */
+            job_id?: string | null;
+            /** Note */
+            note?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "new" | "updated" | "duplicate" | "imported" | "failed";
+            /** Title */
+            title: string;
+            /** Url */
+            url?: string | null;
+        };
         /** InterviewCreate */
         InterviewCreate: {
             /** Checklist */
@@ -1681,7 +1808,7 @@ export interface components {
              * @default greenhouse
              * @enum {string}
              */
-            source: "greenhouse" | "lever" | "ashby" | "remoteok" | "remotive" | "adzuna";
+            source: "greenhouse" | "lever" | "ashby" | "remoteok" | "remotive" | "weworkremotely" | "jobspresso" | "himalayas" | "adzuna";
         };
         /** JobSourceRead */
         JobSourceRead: {
@@ -3545,6 +3672,99 @@ export interface operations {
             };
         };
     };
+    list_imports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportBatchRead"][];
+                };
+            };
+        };
+    };
+    start_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportBatchCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportBatchRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportBatchRead"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_job_sources: {
         parameters: {
             query?: never;
@@ -4818,6 +5038,55 @@ export interface operations {
                 };
                 content: {
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": unknown;
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    download_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
                 };
             };
             /** @description Not Found */

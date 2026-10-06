@@ -12,6 +12,7 @@ from app.models import (
     ApplicationEvent,
     ApplicationNote,
     CoverLetter,
+    ImportBatch,
     Interview,
     LLMUsage,
     ResumeVersion,
@@ -21,13 +22,13 @@ from app.repositories.profiles import ProfileRepository
 from app.repositories.resumes import ResumeRepository
 from app.repositories.settings import SettingsRepository
 from app.services.profile import preferences_of
-from app.services.storage import LocalFileStorage
+from app.services.storage import FileStorage
 
 logger = logging.getLogger(__name__)
 
 
 class AccountService:
-    def __init__(self, session: Session, storage: LocalFileStorage) -> None:
+    def __init__(self, session: Session, storage: FileStorage) -> None:
         self._session = session
         self._storage = storage
 
@@ -105,6 +106,18 @@ class AccountService:
                 }
                 for v in self._session.scalars(
                     select(ResumeVersion).where(ResumeVersion.user_id == user.id)
+                )
+            ],
+            "job_imports": [
+                {
+                    "channel": b.channel,
+                    "status": b.status,
+                    "method": b.method,
+                    "results": b.results,
+                    "created_at": b.created_at.isoformat(),
+                }
+                for b in self._session.scalars(
+                    select(ImportBatch).where(ImportBatch.user_id == user.id)
                 )
             ],
             "llm_usage": [

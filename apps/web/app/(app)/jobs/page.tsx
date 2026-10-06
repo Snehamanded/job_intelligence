@@ -204,7 +204,8 @@ export default function JobsPage() {
 
         {jobs.data && jobs.data.items.length === 0 ? (
           <EmptyState icon={Search} title="No jobs yet">
-            Add a Greenhouse board under Sources, then run a search. You can also import a job.
+            Run a search: remote job boards and a starter set of company boards are searched for the
+            roles in your profile. Add more companies under Sources, or import a job.
           </EmptyState>
         ) : (
           <div className="grid gap-3">

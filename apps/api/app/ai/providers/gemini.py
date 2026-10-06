@@ -81,12 +81,15 @@ class GeminiProvider:
         return AIResponse(text=response.text, usage=usage)
 
     def embed(self, texts: list[str], *, dims: int) -> EmbeddingResponse:
+        contents: list[types.ContentUnion] = [
+            types.Content(parts=[types.Part(text=t)]) for t in texts
+        ]
         try:
             response = self._client.models.embed_content(
                 model=self.embedding_model,
                 # One Content per text: multimodal models would otherwise merge a list of
                 # strings into a single multi-part input and return one vector.
-                contents=[types.Content(parts=[types.Part(text=t)]) for t in texts],
+                contents=contents,
                 config=types.EmbedContentConfig(
                     output_dimensionality=dims, task_type="SEMANTIC_SIMILARITY"
                 ),

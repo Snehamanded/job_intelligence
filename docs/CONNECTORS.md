@@ -79,8 +79,15 @@ type, location/remote, salary floor and experience. Each check returns `pass`, `
 | Remote OK | Real (A) | On/off | `remoteok.com/api`. The first element is the legal notice. Links are **followed** (no `nofollow`) and shown as "Source: Remote OK", as their terms require. No logo. At most hourly per user. Salary fields are USD per year; 0 means not listed |
 | Remotive | Real (A) | On/off | `remotive.com/api/remote-jobs`, one request then filtered locally. At most once every 6h per user (they ask for 4 or fewer a day). Link back plus "Source: Remotive" |
 | Adzuna | Real (A), keyed | Country | Off until `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` are set. `salary_is_predicted` salaries are ignored. Descriptions are snippets. Built from the docs; not live-verified |
-| LinkedIn, Naukri, Indeed | Mock (C) | — | Fictional jobs, only when `ENABLE_MOCK_CONNECTORS=true`, labeled "Mock data" |
-| SmartRecruiters | Manual only (C) | — | robots.txt disallows all agents except LinkedInBot, so there is no connector |
+| We Work Remotely | Real (B) | On/off | `weworkremotely.com/remote-jobs.rss`, parsed with `defusedxml` (`connectors/rss.py`). Title is "Company: Role"; "Anywhere in the World" → Worldwide. At most hourly |
+| Jobspresso | Real (B) | On/off | `jobspresso.co/jobs/feed/` (the query-string feed is disallowed by robots.txt). `dc:creator` is "Company<br>⚲ Location". At most hourly |
+| Himalayas | Real (A) | On/off | `himalayas.app/jobs/api/search?q=…&country=India`, up to 3 pages of 20 for up to 3 keywords. Salary only when `salaryPeriod` is known. At most every 6h |
+| Workday, SmartRecruiters, iCIMS, Taleo, SAP SuccessFactors | Import (B) | — | No search connector. A pasted job link is read from its JobPosting data (robots.txt checked) and labeled with the platform (`importer.platform_of`). The SmartRecruiters API host is never fetched |
+| Google Jobs | Import (C) | — | No API; google.com is never fetched. Import the company's own page instead |
+| LinkedIn, Indeed, Glassdoor, ZipRecruiter, Naukri, Foundit, Shine, Apna, Wellfound, Instahyre, Cutshort, Hirist | Mock (C) | — | Never fetched. Fictional jobs only when `ENABLE_MOCK_CONNECTORS=true`, labeled "Mock data". Paste descriptions to import real ones |
+
+The Sources page lists every source grouped by category (company career portals, remote, general,
+India, startup/tech) with how it's supported.
 
 Minimum intervals are enforced from `job_source_configs.last_fetched_at`. A skipped source shows
 "Checked recently … next checked in N min" in the search results.
@@ -89,7 +96,7 @@ Minimum intervals are enforced from `job_source_configs.last_fetched_at`. A skip
 
 `POST /api/jobs/import` with a URL:
 
-1. **Tier C sites** (LinkedIn, Naukri, Indeed, Glassdoor, Wellfound, SmartRecruiters…) are refused
+1. **Tier C sites** (LinkedIn, Naukri, Indeed, Glassdoor, Wellfound, Google, the SmartRecruiters API…) are refused
    without fetching anything. The user pastes the description instead.
 2. **Greenhouse, Lever and Ashby job links** go through their APIs.
 3. **Any other page** goes through `SafeFetcher`, then `jsonld.find_job_postings` (schema.org
@@ -105,6 +112,27 @@ Minimum intervals are enforced from `job_source_configs.last_fetched_at`. A skip
 
    Residual risk: DNS can change between the check and the connection (rebinding). This is
    acceptable for a single-user app, and the address checks still block simple tricks.
+
+## Bulk import: alert emails and WhatsApp
+
+`POST /api/job-imports {channel: email | whatsapp | other, text}` queues a background import
+(`services/jobs/bulk_import.py`); `GET /api/job-imports/{id}` shows its progress and results.
+This is how jobs from sites that can't be fetched (LinkedIn, Naukri, Indeed alerts; WhatsApp
+groups and channels) get in: the user pastes what they already received.
+
+- WhatsApp chat exports (Android and iOS formats) are split into messages; timestamps, sender
+  names and numbers, system notices and media placeholders are removed before anything else.
+  WhatsApp itself is never accessed: there is no official API for reading channels, and automating
+  WhatsApp Web would break its terms and AGENTS.md §2.
+- Posts are found by the LLM (with consent) or by rules (email: blocks ending at a link; chat: one
+  message per post, kept when it names a role and has a link or hiring words).
+- A post's link is imported in full when it's a company career page (Greenhouse, Lever, Ashby or
+  JobPosting data), at most 15 per batch with the usual delay. LinkedIn, Naukri and other Tier C
+  links are stored for the user to open, never fetched, including after redirects from short links.
+- Otherwise the post's own text is the description (`source` = `email_alert`, `whatsapp` or
+  `pasted`), deduplicated like any job. Short posts are flagged so the user can paste more.
+- Up to 60,000 characters per import (the newest messages of a long chat export); the pasted text
+  is deleted once processed.
 
 ## Adding a connector
 

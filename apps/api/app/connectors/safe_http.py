@@ -71,7 +71,13 @@ class SafeFetcher:
         self._max_bytes = max_bytes
         self._resolve = resolve
 
-    def _get(self, url: str, *, html_only: bool) -> tuple[str, str] | None:
+    def _get(
+        self,
+        url: str,
+        *,
+        html_only: bool,
+        check_redirect: Callable[[str], None] | None = None,
+    ) -> tuple[str, str] | None:
         """(final_url, text), or None on 404. Follows redirects only after re-checking them."""
         for _ in range(MAX_REDIRECTS + 1):
             url = check_url(url, self._resolve)
@@ -82,6 +88,8 @@ class SafeFetcher:
                         if not location:
                             raise UnsafeURLError("The page redirected without a destination.")
                         url = urljoin(url, location)
+                        if check_redirect is not None:
+                            check_redirect(url)
                         continue
                     if response.status_code == 404:
                         return None
@@ -115,13 +123,25 @@ class SafeFetcher:
         parser.parse(found[1].splitlines())
         return parser.can_fetch(self._user_agent, url)
 
-    def fetch_page(self, url: str) -> tuple[str, str]:
+    def fetch_page(
+        self, url: str, refuse: Callable[[str], str | None] | None = None
+    ) -> tuple[str, str]:
+        """`refuse(url)` names a site that must never be fetched; checked on every redirect too,
+        so a short link can't lead to one."""
+
+        def check(target: str) -> None:
+            if refuse is not None and (site := refuse(target)):
+                raise UnsafeURLError(
+                    f"The link leads to {site}, which doesn't allow automated access."
+                )
+            if not self.allowed_by_robots(target):
+                raise UnsafeURLError(
+                    "This website's robots.txt doesn't allow automated access to that page."
+                )
+
         check_url(url, self._resolve)
-        if not self.allowed_by_robots(url):
-            raise UnsafeURLError(
-                "This website's robots.txt doesn't allow automated access to that page."
-            )
-        found = self._get(url, html_only=True)
+        check(url)
+        found = self._get(url, html_only=True, check_redirect=check)
         if found is None:
             raise UnsafeURLError("That page wasn't found.")
         return found

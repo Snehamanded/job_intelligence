@@ -116,7 +116,17 @@ class JobSourceRead(BaseModel):
 
 
 class JobSourceCreate(BaseModel):
-    source: Literal["greenhouse", "lever", "ashby", "remoteok", "remotive", "adzuna"] = "greenhouse"
+    source: Literal[
+        "greenhouse",
+        "lever",
+        "ashby",
+        "remoteok",
+        "remotive",
+        "weworkremotely",
+        "jobspresso",
+        "himalayas",
+        "adzuna",
+    ] = "greenhouse"
     identifier: str = Field(default="", max_length=100, description="Board token, site or country")
     display_name: str | None = Field(default=None, max_length=200)
 
@@ -125,11 +135,12 @@ class ConnectorRead(BaseModel):
     name: str
     label: str
     tier: Literal["A", "B", "C"]
-    kind: Literal["real", "mock", "manual_only"]
+    kind: Literal["real", "import", "mock", "manual_only"]
     enabled: bool
     note: str
     config: Literal["boards", "toggle", "country", "none"]
     attribution: str | None
+    category: Literal["general", "india", "startup", "remote", "ats"]
 
 
 class JobImportRequest(BaseModel):
@@ -153,3 +164,36 @@ class JobImportRequest(BaseModel):
         if has_text and len(self.description.strip()) < 50:  # type: ignore[union-attr]
             raise ValueError("The description is too short")
         return self
+
+
+ImportChannel = Literal["email", "whatsapp", "other"]
+
+
+class ImportBatchCreate(BaseModel):
+    """Pasted job alert emails, or WhatsApp messages (copied, or a chat export file's text)."""
+
+    channel: ImportChannel
+    text: str = Field(min_length=30, max_length=2_000_000)
+
+
+class ImportPostResult(BaseModel):
+    title: str
+    company: str | None = None
+    url: str | None = None
+    job_id: uuid.UUID | None = None
+    status: Literal["new", "updated", "duplicate", "imported", "failed"]
+    note: str | None = None
+
+
+class ImportBatchRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    channel: ImportChannel
+    status: Literal["queued", "running", "completed", "failed"]
+    method: Literal["ai", "rules"] | None
+    notice: str | None
+    error_message: str | None
+    results: list[ImportPostResult]
+    created_at: datetime
+    finished_at: datetime | None

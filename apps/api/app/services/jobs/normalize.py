@@ -93,7 +93,9 @@ def parse_location(location_text: str, title: str = "") -> LocationInfo:
                 if (r := normalize_region(piece.strip(" )")))
             ]
             regions.extend(r for r in part_regions if r not in regions)
-            label = f"Remote ({', '.join(part_regions)})" if part_regions else "Remote"
+            # Unrecognized region text is still shown ("Remote (Various US States)").
+            shown = ", ".join(part_regions) or rest
+            label = f"Remote ({shown})" if shown else "Remote"
             if label not in display:
                 display.append(label)
             continue

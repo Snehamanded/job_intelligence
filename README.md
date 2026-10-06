@@ -5,10 +5,13 @@ and cover letters. It is **not** an auto-apply bot. See [AGENTS.md](AGENTS.md) f
 and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it fits together.
 
 Status: **Phase 8 (More job sources)**. Search Greenhouse, Lever and Ashby company boards and
-the Remote OK and Remotive remote feeds (Adzuna with your own keys), and import any job page that
-publishes standard job data. Draft cover letters where every sentence about you cites your
+the Remote OK, We Work Remotely, Remotive, Himalayas and Jobspresso remote feeds (Adzuna with
+your own keys), import job alert emails (LinkedIn, Naukri, Indeed) and WhatsApp job messages in bulk, and import
+any job page that publishes standard job data (including Workday,
+SmartRecruiters, iCIMS, Taleo and SuccessFactors pages). LinkedIn, Naukri and similar sites are
+never fetched: paste their descriptions. Draft cover letters where every sentence about you cites your
 resume and every sentence about the company quotes the posting. Tailor your resume for a job: every change is checked
-against your verified resume and needs your approval, then download DOCX or save as PDF. Track applications on a Kanban board with notes, interviews and
+against your verified resume and needs your approval, then download it as PDF or DOCX in the same layout as the resume you uploaded. Track applications on a Kanban board with notes, interviews and
 history, and see which sources and match levels lead to interviews. Jobs are scored 0–100 with a
 breakdown and ranked. Upload a resume and get a verified, versioned profile. Set
 preferences, add company Greenhouse boards and search them, then review normalized,
@@ -72,7 +75,7 @@ All configuration comes from `.env` at the repo root. `.env.example` lists every
 | `MAX_GREENHOUSE_BOARDS` | api, worker | Board limit per user |
 | `ENABLE_MOCK_CONNECTORS` | worker | Fictional LinkedIn/Naukri/Indeed jobs for development (labeled as mock) |
 | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | api, worker | Optional Adzuna API keys (register at developer.adzuna.com and accept their terms) |
-| `REMOTIVE_MIN_INTERVAL_SECONDS`, `REMOTEOK_MIN_INTERVAL_SECONDS` | worker | Minimum time between fetches of the remote feeds (defaults 6h and 1h) |
+| `REMOTIVE_MIN_INTERVAL_SECONDS`, `REMOTEOK_MIN_INTERVAL_SECONDS`, `WEWORKREMOTELY_MIN_INTERVAL_SECONDS`, `JOBSPRESSO_MIN_INTERVAL_SECONDS`, `HIMALAYAS_MIN_INTERVAL_SECONDS` | worker | Minimum time between fetches of the remote feeds (defaults 6h, 1h, 1h, 1h, 6h) |
 | `SEARCH_RATE_LIMIT`, `SEARCH_RATE_WINDOW_SECONDS` | api | Searches, imports and board additions per user per window |
 | `GEMINI_EMBEDDING_MODEL`, `OPENAI_EMBEDDING_MODEL` | worker | Embedding models (768 dims) |
 | `EMBEDDING_MAX_JOBS_PER_RUN` | worker | Jobs embedded per scoring run, eligible ones first |
@@ -137,6 +140,12 @@ make types
 
 `make check` fails if the file is stale or edited.
 
+## Deploying (free)
+
+Vercel (website), Render (API and worker in one free container), Neon (Postgres + pgvector) and
+Upstash (Redis). Step-by-step: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). The blueprint is
+[render.yaml](render.yaml).
+
 ## Repository layout
 
 ```
@@ -155,3 +164,4 @@ docs                ARCHITECTURE, SECURITY, SOURCE_FEASIBILITY, phases/
 - **"Cannot reach the API" in the browser**: check `curl localhost:8000/api/health` and that
   `CORS_ORIGINS` includes the web origin.
 - **Reset all local data**: `make clean` (deletes the Docker volumes).
+# job_intelligence

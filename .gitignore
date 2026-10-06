@@ -1,0 +1,29 @@
+# Secrets and local data
+.env
+.env.*
+!.env.example
+storage/
+*.pdf
+!apps/api/tests/fixtures/**/*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+apps/api/openapi.json
+
+# Node
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

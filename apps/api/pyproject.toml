@@ -1,0 +1,65 @@
+[project]
+name = "job-api"
+version = "0.1.0"
+description = "AI Job Intelligence & Personal Job CRM API"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "email-validator>=2.2",
+    "sqlalchemy>=2.0.36",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.14",
+    "pgvector>=0.3",
+    "argon2-cffi>=23.1",
+    "pyjwt>=2.10",
+    "redis>=5.2",
+    "python-multipart>=0.0.32",
+    "pypdf>=6.19.0",
+    "python-docx>=1.2.0",
+    "rq>=2.12.0",
+    "google-genai>=2.28.0",
+    "openai>=3.24.0",
+    "httpx>=0.28.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "fakeredis>=2.26",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["../../infrastructure/migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "S", "SIM", "RUF"]
+# RUF001: resume/job text parsers deliberately match Unicode dashes and bullets.
+ignore = ["B008", "RUF001"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S107", "E501"]
+"tests/conftest.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+packages = ["app", "tests", "scripts"]
+
+[[tool.mypy.overrides]]
+module = ["pgvector.*", "fakeredis.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

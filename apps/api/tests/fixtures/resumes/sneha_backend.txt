@@ -1,0 +1,33 @@
+Sneha Rao
+Bengaluru, India | sneha.rao@example.com | +91 98765 43210
+linkedin.com/in/sneha-rao-example | github.com/sneha-rao-example
+
+Summary
+Backend developer with one year of experience building Python APIs.
+
+Skills
+Languages: Python, JavaScript, SQL
+Frameworks: FastAPI, Django, React
+Tools: PostgreSQL, Docker, Git, AWS
+
+Experience
+Software Engineer | Acme Analytics Pvt Ltd | Jul 2025 - Present
+• Built REST APIs in FastAPI serving 2,000 daily users
+• Reduced report generation time by 40% by adding PostgreSQL indexes
+• Wrote unit tests with pytest and set up GitHub Actions CI
+
+Software Engineering Intern at Nimbus Labs
+Jan 2025 - Jun 2025
+• Developed internal dashboards in React
+• Automated data cleanup scripts in Python
+
+Projects
+Job Tracker - A personal job application tracker
+• Built with Django and PostgreSQL, deployed with Docker
+
+Education
+RV College of Engineering, Bengaluru
+B.E. in Computer Science, 2021 - 2025
+
+Certifications
+AWS Certified Cloud Practitioner

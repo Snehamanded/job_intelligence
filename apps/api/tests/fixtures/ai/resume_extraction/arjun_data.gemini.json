@@ -1,0 +1,67 @@
+{
+  "name": "Arjun Mehta",
+  "email": "arjun.mehta@example.org",
+  "phone": "+91 91234 56789",
+  "location": "Pune",
+  "skills": [
+    {
+      "name": "Python",
+      "evidence": "Python"
+    },
+    {
+      "name": "SQL",
+      "evidence": "SQL"
+    },
+    {
+      "name": "Pandas",
+      "evidence": "Pandas"
+    },
+    {
+      "name": "Power BI",
+      "evidence": "Power BI"
+    },
+    {
+      "name": "Tableau",
+      "evidence": "Tableau"
+    },
+    {
+      "name": "Excel",
+      "evidence": "Excel"
+    },
+    {
+      "name": "Airflow",
+      "evidence": "Airflow"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Data Analyst",
+      "company": "Brightline Retail",
+      "date_text": "March 2023 – Present",
+      "evidence": "Data Analyst, Brightline Retail\nMarch 2023 – Present",
+      "bullets": [
+        "Built Power BI dashboards used by 12 regional managers",
+        "Automated weekly sales reporting with Airflow and Python"
+      ]
+    },
+    {
+      "title": "Junior Data Analyst",
+      "company": "Orbit Finance",
+      "date_text": "June 2021 – February 2023",
+      "evidence": "Junior Data Analyst, Orbit Finance\nJune 2021 – February 2023",
+      "bullets": [
+        "Wrote SQL queries for monthly revenue analysis",
+        "Cleaned customer datasets in Pandas"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Savitribai Phule Pune University",
+      "degree": "B.Sc.",
+      "field_of_study": "Statistics",
+      "date_text": "2018 - 2021",
+      "evidence": "Savitribai Phule Pune University\nB.Sc. Statistics, 2018 - 2021"
+    }
+  ]
+}

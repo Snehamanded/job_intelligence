@@ -1,0 +1,80 @@
+name: jobcrm
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: jobcrm
+      POSTGRES_PASSWORD: jobcrm
+      POSTGRES_DB: jobcrm
+    ports: ["${POSTGRES_HOST_PORT:-5433}:5432"]
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init-test-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobcrm -d jobcrm"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api.Dockerfile
+    env_file: .env
+    environment:
+      # Inside the compose network, services are reached by name, not localhost.
+      DATABASE_URL: postgresql://jobcrm:jobcrm@db:5432/jobcrm
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_PATH: /data/storage
+    ports: ["8000:8000"]
+    volumes:
+      - api-storage:/data/storage
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    # Parses uploaded resumes in the background (RQ). Shares the upload volume with the API.
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api.Dockerfile
+    command: ["python", "-m", "app.workers.main"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://jobcrm:jobcrm@db:5432/jobcrm
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_PATH: /data/storage
+    volumes:
+      - api-storage:/data/storage
+    depends_on:
+      api: { condition: service_healthy }
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+    # Only public config reaches the web container; backend secrets stay with the API.
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports: ["3000:3000"]
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  db-data:
+  api-storage:

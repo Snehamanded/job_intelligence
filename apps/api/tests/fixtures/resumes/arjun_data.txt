@@ -1,0 +1,23 @@
+Arjun Mehta
+Pune | arjun.mehta@example.org | +91 91234 56789
+
+Professional Summary
+Data analyst with three years of experience in SQL, Python and dashboarding.
+
+Technical Skills
+Python, SQL, Pandas, Power BI, Tableau, Excel, Airflow
+
+Work Experience
+Data Analyst, Brightline Retail
+March 2023 – Present
+• Built Power BI dashboards used by 12 regional managers
+• Automated weekly sales reporting with Airflow and Python
+
+Junior Data Analyst, Orbit Finance
+June 2021 – February 2023
+• Wrote SQL queries for monthly revenue analysis
+• Cleaned customer datasets in Pandas
+
+Education
+Savitribai Phule Pune University
+B.Sc. Statistics, 2018 - 2021

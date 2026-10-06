@@ -1,0 +1,103 @@
+{
+  "name": "Sneha Rao",
+  "email": "sneha.rao@example.com",
+  "phone": "+91 98765 43210",
+  "location": "Bengaluru, India",
+  "links": [
+    "linkedin.com/in/sneha-rao-example",
+    "github.com/sneha-rao-example"
+  ],
+  "skills": [
+    {
+      "name": "Python",
+      "evidence": "Languages: Python, JavaScript, SQL"
+    },
+    {
+      "name": "JavaScript",
+      "evidence": "Languages: Python, JavaScript, SQL"
+    },
+    {
+      "name": "SQL",
+      "evidence": "Languages: Python, JavaScript, SQL"
+    },
+    {
+      "name": "FastAPI",
+      "evidence": "Frameworks: FastAPI, Django, React"
+    },
+    {
+      "name": "Django",
+      "evidence": "Frameworks: FastAPI, Django, React"
+    },
+    {
+      "name": "React",
+      "evidence": "Frameworks: FastAPI, Django, React"
+    },
+    {
+      "name": "PostgreSQL",
+      "evidence": "Tools: PostgreSQL, Docker, Git, AWS"
+    },
+    {
+      "name": "Docker",
+      "evidence": "Tools: PostgreSQL, Docker, Git, AWS"
+    },
+    {
+      "name": "Git",
+      "evidence": "Tools: PostgreSQL, Docker, Git, AWS"
+    },
+    {
+      "name": "AWS",
+      "evidence": "Tools: PostgreSQL, Docker, Git, AWS"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Software Engineer",
+      "company": "Acme Analytics Pvt Ltd",
+      "date_text": "Jul 2025 - Present",
+      "evidence": "Software Engineer | Acme Analytics Pvt Ltd | Jul 2025 - Present",
+      "bullets": [
+        "Built REST APIs in FastAPI serving 2,000 daily users",
+        "Reduced report generation time by 40% by adding PostgreSQL indexes",
+        "Wrote unit tests with pytest and set up GitHub Actions CI"
+      ]
+    },
+    {
+      "title": "Software Engineering Intern",
+      "company": "Nimbus Labs",
+      "date_text": "Jan 2025 - Jun 2025",
+      "evidence": "Software Engineering Intern at Nimbus Labs\nJan 2025 - Jun 2025",
+      "bullets": [
+        "Developed internal dashboards in React",
+        "Automated data cleanup scripts in Python"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Job Tracker",
+      "description": "A personal job application tracker",
+      "technologies": [
+        "Django",
+        "PostgreSQL",
+        "Docker"
+      ],
+      "evidence": "Job Tracker - A personal job application tracker\n• Built with Django and PostgreSQL, deployed with Docker"
+    }
+  ],
+  "education": [
+    {
+      "institution": "RV College of Engineering, Bengaluru",
+      "degree": "B.E. in Computer Science",
+      "field_of_study": "Computer Science",
+      "date_text": "2021 - 2025",
+      "evidence": "RV College of Engineering, Bengaluru\nB.E. in Computer Science, 2021 - 2025"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AWS Certified Cloud Practitioner",
+      "issuer": null,
+      "evidence": "AWS Certified Cloud Practitioner"
+    }
+  ]
+}

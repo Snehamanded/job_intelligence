@@ -1,0 +1,37 @@
+[
+  {
+    "key": "backend_python",
+    "title": "Backend Engineer (Python)",
+    "company": "Golden Payments",
+    "location": "Bengaluru, India",
+    "description": "Build Python services with FastAPI and PostgreSQL, deployed with Docker on AWS. You will design REST APIs and write unit tests. 1-3 years of experience. This is a full-time role."
+  },
+  {
+    "key": "fullstack_js",
+    "title": "Full Stack Developer",
+    "company": "Golden Commerce",
+    "location": "Bengaluru, India",
+    "description": "Work across React, JavaScript and Node.js with MongoDB. 1+ years of experience building web applications. Full-time position."
+  },
+  {
+    "key": "senior_go",
+    "title": "Senior Backend Engineer",
+    "company": "Golden Infra",
+    "location": "Bengaluru, India",
+    "description": "Own distributed systems in Go with Kafka and Kubernetes. 6+ years of experience required. Full-time."
+  },
+  {
+    "key": "data_analyst",
+    "title": "Data Analyst",
+    "company": "Golden Retail",
+    "location": "Pune, India",
+    "description": "Analyse sales data using SQL, Excel and Tableau, and build Power BI dashboards. 2+ years of experience in data analysis. Full-time role."
+  },
+  {
+    "key": "sales_manager",
+    "title": "Regional Sales Manager",
+    "company": "Golden Foods",
+    "location": "Mumbai, India",
+    "description": "Lead a regional sales team and manage distributor relationships across Maharashtra. 5+ years of experience in FMCG sales. Full-time."
+  }
+]

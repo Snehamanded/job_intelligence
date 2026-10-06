@@ -111,11 +111,14 @@ class JobSourceRead(BaseModel):
     identifier: str
     display_name: str
     enabled: bool
+    last_fetched_at: datetime | None
     created_at: datetime
 
 
 class JobSourceCreate(BaseModel):
-    board_token: str = Field(min_length=1, max_length=100)
+    source: Literal["greenhouse", "lever", "ashby", "remoteok", "remotive", "adzuna"] = "greenhouse"
+    identifier: str = Field(default="", max_length=100, description="Board token, site or country")
+    display_name: str | None = Field(default=None, max_length=200)
 
 
 class ConnectorRead(BaseModel):
@@ -125,6 +128,8 @@ class ConnectorRead(BaseModel):
     kind: Literal["real", "mock", "manual_only"]
     enabled: bool
     note: str
+    config: Literal["boards", "toggle", "country", "none"]
+    attribution: str | None
 
 
 class JobImportRequest(BaseModel):

@@ -33,14 +33,8 @@ export function ImportForm({ onImport, pending = false, error }: Props) {
     event.preventDefault();
     let body: ImportBody;
     if (mode === "url") {
-      if (
-        !/^https:\/\/(job-boards|boards)(\.eu)?\.greenhouse\.io\/[^/]+\/jobs\/\d+/.test(
-          values.url.trim(),
-        )
-      ) {
-        setProblem(
-          "Paste a Greenhouse job link, e.g. https://job-boards.greenhouse.io/company/jobs/123.",
-        );
+      if (!/^https?:\/\/[^\s/]+\.[^\s/]+/.test(values.url.trim())) {
+        setProblem("Paste a job link starting with https://");
         return;
       }
       body = { url: values.url.trim() };
@@ -90,7 +84,7 @@ export function ImportForm({ onImport, pending = false, error }: Props) {
   return (
     <form onSubmit={submit} noValidate className="grid gap-4">
       <div role="tablist" className="flex gap-1">
-        {tab("url", "Greenhouse link")}
+        {tab("url", "Job link")}
         {tab("text", "Paste description")}
       </div>
       {mode === "url" ? (
@@ -100,10 +94,12 @@ export function ImportForm({ onImport, pending = false, error }: Props) {
             id="import-url"
             value={values.url}
             onChange={(e) => set("url")(e.target.value)}
-            placeholder="https://job-boards.greenhouse.io/company/jobs/123456"
+            placeholder="https://jobs.lever.co/company/… or a company careers page"
           />
           <p className="text-xs text-muted-foreground">
-            For LinkedIn, Naukri and other sites, copy the description into the other tab.
+            Greenhouse, Lever and Ashby links are read through their APIs; other career pages are
+            read from their published job data. LinkedIn, Naukri, Indeed and similar sites
+            don&apos;t allow automated access: copy the description into the other tab instead.
           </p>
         </div>
       ) : (

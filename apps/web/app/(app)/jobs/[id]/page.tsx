@@ -22,6 +22,7 @@ import {
   formatExperience,
   formatPosted,
   formatSalary,
+  sourceLinkRel,
 } from "@/lib/jobs-format";
 
 export default function JobDetailPage() {
@@ -59,11 +60,16 @@ export default function JobDetailPage() {
           {j.is_mock && <Badge variant="warning">Mock data</Badge>}
         </div>
         <p className="text-muted-foreground">{j.company}</p>
+        <p className="text-xs text-muted-foreground">
+          Source: {SOURCE_LABEL[j.source] ?? j.source}
+          {(j.also_seen_on ?? []).length > 0 &&
+            ` · also on ${(j.also_seen_on ?? []).map((s) => SOURCE_LABEL[s.source] ?? s.source).join(", ")}`}
+        </p>
       </div>
       <div className="flex flex-wrap gap-2">
         {j.url && (
           <Button asChild>
-            <a href={j.url} target="_blank" rel="noopener noreferrer nofollow">
+            <a href={j.url} target="_blank" rel={sourceLinkRel(j.source)}>
               View on {SOURCE_LABEL[j.source] ?? j.source} <ExternalLink />
             </a>
           </Button>

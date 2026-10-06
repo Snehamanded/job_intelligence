@@ -42,7 +42,9 @@ def _prefs(client: TestClient, headers: dict[str, str], **extra: Any) -> None:
 
 
 def _add_board(client: TestClient, headers: dict[str, str], token: str) -> Any:
-    return client.post("/api/job-sources", json={"board_token": token}, headers=headers)
+    return client.post(
+        "/api/job-sources", json={"source": "greenhouse", "identifier": token}, headers=headers
+    )
 
 
 def _search(client: TestClient, headers: dict[str, str], keywords: list[str] | None = None) -> Any:

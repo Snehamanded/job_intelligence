@@ -1,0 +1,33 @@
+{
+  "__note": "Shaped from Adzuna's documented response (developer.adzuna.com/docs/search, 2026-10-06). Not a live recording: no API keys were available. Contents are fictional.",
+  "count": 2,
+  "results": [
+    {
+      "id": "4900000001",
+      "title": "Backend Engineer (Python)",
+      "company": {"display_name": "Example Fintech Pvt Ltd"},
+      "location": {"display_name": "Bangalore, Karnataka", "area": ["India", "Karnataka", "Bangalore"]},
+      "description": "We are hiring a backend engineer with 1-3 years of experience in Python and PostgreSQL...",
+      "redirect_url": "https://www.adzuna.in/land/ad/4900000001",
+      "created": "2026-10-01T09:00:00Z",
+      "salary_min": 1200000,
+      "salary_max": 1800000,
+      "salary_is_predicted": "0",
+      "contract_time": "full_time",
+      "contract_type": "permanent"
+    },
+    {
+      "id": "4900000002",
+      "title": "Python Developer",
+      "company": {"display_name": "Example Services Ltd"},
+      "location": {"display_name": "Pune, Maharashtra", "area": ["India", "Maharashtra", "Pune"]},
+      "description": "Python developer for internal tools...",
+      "redirect_url": "https://www.adzuna.in/land/ad/4900000002",
+      "created": "2026-09-28T09:00:00Z",
+      "salary_min": 650000,
+      "salary_max": 650000,
+      "salary_is_predicted": "1",
+      "contract_time": "full_time"
+    }
+  ]
+}

@@ -1088,6 +1088,13 @@ export interface components {
         };
         /** ConnectorRead */
         ConnectorRead: {
+            /** Attribution */
+            attribution: string | null;
+            /**
+             * Config
+             * @enum {string}
+             */
+            config: "boards" | "toggle" | "country" | "none";
             /** Enabled */
             enabled: boolean;
             /**
@@ -1661,8 +1668,20 @@ export interface components {
         };
         /** JobSourceCreate */
         JobSourceCreate: {
-            /** Board Token */
-            board_token: string;
+            /** Display Name */
+            display_name?: string | null;
+            /**
+             * Identifier
+             * @description Board token, site or country
+             * @default
+             */
+            identifier: string;
+            /**
+             * Source
+             * @default greenhouse
+             * @enum {string}
+             */
+            source: "greenhouse" | "lever" | "ashby" | "remoteok" | "remotive" | "adzuna";
         };
         /** JobSourceRead */
         JobSourceRead: {
@@ -1682,6 +1701,8 @@ export interface components {
             id: string;
             /** Identifier */
             identifier: string;
+            /** Last Fetched At */
+            last_fetched_at: string | null;
             /** Source */
             source: string;
         };

@@ -4,8 +4,7 @@ from fastapi import Depends, HTTPException, Request, status
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from app.connectors.greenhouse import GreenhouseConnector
-from app.connectors.registry import greenhouse
+from app.connectors.registry import Connectors, build
 from app.core.config import Settings, get_settings
 from app.core.db import get_db
 from app.core.rate_limit import RateLimiter
@@ -111,8 +110,8 @@ def search_rate_limit(user: CurrentUser, redis: RedisClient, settings: AppSettin
         )
 
 
-def get_greenhouse(settings: AppSettings) -> GreenhouseConnector:
-    return greenhouse(settings)
+def get_connectors(settings: AppSettings) -> Connectors:
+    return build(settings)
 
 
-Greenhouse = Annotated[GreenhouseConnector, Depends(get_greenhouse)]
+JobConnectors = Annotated[Connectors, Depends(get_connectors)]

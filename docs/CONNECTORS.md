@@ -51,9 +51,10 @@ Log events: `search_started`, `source_completed`, `source_failed`, `duplicates_r
 `JobStore.save` checks for duplicates in this order:
 1. The same `(source, source_job_id)` is updated in place.
 2. Otherwise the same `dedupe_key` (company without suffixes + title + first place + remote type)
-   or the same description hash means the job was already found elsewhere. The new source is
-   appended to `also_seen_on`.
-3. Anything else is a new job.
+   means the job was already found elsewhere.
+3. Otherwise the same description hash counts as a duplicate **only if the places match**. Employers
+   such as Palantir post one description in several cities, and those are separate openings.
+4. Anything else is a new job. For duplicates, the new source is appended to `also_seen_on`.
 
 ## Eligibility
 
@@ -70,11 +71,40 @@ type, location/remote, salary floor and experience. Each check returns `pass`, `
 
 ## Sources
 
-| Source | Kind | Notes |
-|---|---|---|
-| Greenhouse | Real (Tier A) | `GET boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true`. Users add board tokens on `/jobs/sources`, and each token is validated against `/v1/boards/{token}`. 1s pause between boards, at most 25 boards and 1,000 jobs per search. Single jobs (manual import) use `.../jobs/{id}?pay_transparency=true` |
-| LinkedIn, Naukri, Indeed | Mock (Tier C) | Fictional jobs, only when `ENABLE_MOCK_CONNECTORS=true`, always labeled "Mock data". No scraping |
-| Manual import | Universal | A Greenhouse job URL is fetched through the API. Any other job can be pasted (title, company, location, description) |
+| Source | Kind | Config | Notes |
+|---|---|---|---|
+| Greenhouse | Real (A) | Board token | `boards-api.greenhouse.io`. Token validated on add. 1s between boards |
+| Lever | Real (A) | Site name | `api.lever.co/v0/postings/{site}?mode=json`, paged 100 at a time with a 1s crawl delay (robots.txt). No company name in the API, so the user's display name (or the site name) is used |
+| Ashby | Real (A) | Board name | `api.ashbyhq.com/posting-api/job-board/{board}?includeCompensation=true`. Pay used only when `shouldDisplayCompensationOnJobPostings` is true. The primary location follows `workplaceType`; secondary ones keep their own wording ("Remote (Canada)") |
+| Remote OK | Real (A) | On/off | `remoteok.com/api`. The first element is the legal notice. Links are **followed** (no `nofollow`) and shown as "Source: Remote OK", as their terms require. No logo. At most hourly per user. Salary fields are USD per year; 0 means not listed |
+| Remotive | Real (A) | On/off | `remotive.com/api/remote-jobs`, one request then filtered locally. At most once every 6h per user (they ask for 4 or fewer a day). Link back plus "Source: Remotive" |
+| Adzuna | Real (A), keyed | Country | Off until `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` are set. `salary_is_predicted` salaries are ignored. Descriptions are snippets. Built from the docs; not live-verified |
+| LinkedIn, Naukri, Indeed | Mock (C) | — | Fictional jobs, only when `ENABLE_MOCK_CONNECTORS=true`, labeled "Mock data" |
+| SmartRecruiters | Manual only (C) | — | robots.txt disallows all agents except LinkedInBot, so there is no connector |
+
+Minimum intervals are enforced from `job_source_configs.last_fetched_at`. A skipped source shows
+"Checked recently … next checked in N min" in the search results.
+
+## Manual import
+
+`POST /api/jobs/import` with a URL:
+
+1. **Tier C sites** (LinkedIn, Naukri, Indeed, Glassdoor, Wellfound, SmartRecruiters…) are refused
+   without fetching anything. The user pastes the description instead.
+2. **Greenhouse, Lever and Ashby job links** go through their APIs.
+3. **Any other page** goes through `SafeFetcher`, then `jsonld.find_job_postings` (schema.org
+   `JobPosting`, including `@graph`, comment-wrapped scripts, `TELECOMMUTE`, `baseSalary`). The
+   fetcher only proceeds when:
+   - the scheme is http(s), there are no credentials in the URL, and the port is 80 or 443;
+   - every resolved address is public (`ip.is_global`; IPv4-mapped IPv6 unwrapped; loopback,
+     private, link-local, metadata, multicast and reserved addresses refused, which covers decimal
+     and octal IP forms after resolution);
+   - each redirect passes the same check again, up to 3;
+   - the response is HTML and at most `IMPORT_MAX_BYTES` (2 MB);
+   - robots.txt allows our User-Agent.
+
+   Residual risk: DNS can change between the check and the connection (rebinding). This is
+   acceptable for a single-user app, and the address checks still block simple tricks.
 
 ## Adding a connector
 

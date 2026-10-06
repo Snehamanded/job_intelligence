@@ -36,12 +36,15 @@ class SearchService:
         )
 
         targets: dict[str, list[str]] = defaultdict(list)
+        configs: dict[str, list[JobSourceConfig]] = defaultdict(list)
         for config in self._session.scalars(
             select(JobSourceConfig).where(
                 JobSourceConfig.user_id == user_id, JobSourceConfig.enabled.is_(True)
             )
         ):
-            targets[config.source].append(config.identifier)
+            # "token|Display name" lets per-company sources name the employer.
+            targets[config.source].append(f"{config.identifier}|{config.display_name}")
+            configs[config.source].append(config)
 
         results: list[dict[str, Any]] = []
         for connector in self._connectors:
@@ -49,7 +52,21 @@ class SearchService:
                 results.append({"source": connector.name, "label": connector.label,
                                 "status": "skipped", "error": "Not configured"})  # fmt: skip
                 continue
+            wait = self._wait_seconds(connector, configs[connector.name])
+            if wait:
+                note = (
+                    f"Checked recently; {connector.label} asks for few requests, "
+                    f"so it's next checked in {wait // 60 + 1} min"
+                )
+                results.append(
+                    {"source": connector.name, "label": connector.label, "status": "skipped",
+                     "error": note}
+                )  # fmt: skip
+                continue
             results.append(self._run_connector(user_id, run, connector, targets[connector.name]))
+            if results[-1]["status"] != "failed":
+                for config in configs[connector.name]:
+                    config.last_fetched_at = datetime.now(UTC)
             # Persist progress per source, so one bad source can't lose the others' results.
             run.source_results = list(results)
             self._session.commit()
@@ -66,6 +83,15 @@ class SearchService:
             extra={"search_run_id": str(run.id), "status": run.status,
                    "new": sum(r.get("new", 0) for r in results)},
         )  # fmt: skip
+
+    @staticmethod
+    def _wait_seconds(connector: JobConnector, configs: list[JobSourceConfig]) -> int:
+        interval = getattr(connector, "min_interval_seconds", 0)
+        fetched = [c.last_fetched_at for c in configs if c.last_fetched_at]
+        if not interval or not fetched:
+            return 0
+        elapsed = (datetime.now(UTC) - max(fetched)).total_seconds()
+        return max(0, int(interval - elapsed))
 
     def _run_connector(
         self, user_id: uuid.UUID, run: SearchRun, connector: JobConnector, targets: list[str]

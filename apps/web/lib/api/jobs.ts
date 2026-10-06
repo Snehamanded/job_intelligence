@@ -127,12 +127,18 @@ export function useConnectors() {
   });
 }
 
+export type NewJobSource = {
+  source: "greenhouse" | "lever" | "ashby" | "remoteok" | "remotive" | "adzuna";
+  identifier?: string;
+  display_name?: string | null;
+};
+
 export function useAddJobSource() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (boardToken: string) => {
+    mutationFn: async (body: NewJobSource) => {
       const { data, error, response } = await api.POST("/api/job-sources", {
-        body: { board_token: boardToken },
+        body: { identifier: "", ...body },
       });
       if (!data) throw toApiError(response.status, error);
       return data;

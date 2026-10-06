@@ -44,6 +44,13 @@ def _apply(job: Job, n: NormalizedJob) -> None:
     job.raw = n.raw
 
 
+def _same_place(job: Job, n: NormalizedJob) -> bool:
+    """The same description in a different city is a different opening, not a duplicate."""
+    a = set(job.cities) | set(job.remote_regions)
+    b = set(n.location.cities) | set(n.location.remote_regions)
+    return a == b or not a or not b
+
+
 class JobStore:
     """Upserts normalized jobs for one user, collapsing duplicates.
 
@@ -70,14 +77,20 @@ class JobStore:
             self._session.flush()
             return StoreResult(existing, "updated")
 
-        duplicate = self._session.scalar(
-            select(Job)
-            .where(
-                Job.user_id == self._user_id,
-                or_(Job.dedupe_key == n.dedupe_key, Job.content_hash == n.content_hash),
-            )
-            .order_by(Job.first_seen_at)
-            .limit(1)
+        duplicate = next(
+            (
+                job
+                for job in self._session.scalars(
+                    select(Job)
+                    .where(
+                        Job.user_id == self._user_id,
+                        or_(Job.dedupe_key == n.dedupe_key, Job.content_hash == n.content_hash),
+                    )
+                    .order_by(Job.first_seen_at)
+                )
+                if job.dedupe_key == n.dedupe_key or _same_place(job, n)
+            ),
+            None,
         )
         if duplicate is not None:
             seen = {(s["source"], s["source_job_id"]) for s in duplicate.also_seen_on}

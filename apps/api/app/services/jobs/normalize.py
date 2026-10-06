@@ -33,6 +33,7 @@ class RawPosting:
     url: str | None = None
     posted_at: datetime | None = None
     salary: Salary | None = None  # structured pay from the source, if any
+    employment_hint: "EmploymentType | None" = None  # structured type from the source, if any
     is_mock: bool = False
     raw: dict[str, Any] = field(default_factory=dict)
 
@@ -102,8 +103,8 @@ def parse_location(location_text: str, title: str = "") -> LocationInfo:
         pieces = [p.strip() for p in part.split(",") if p.strip()]
         city = canonical_city(pieces[0]) if pieces else None
         country = next((c for p in reversed(pieces) if (c := normalize_country(p))), None)
-        if city is None and country is None and pieces:
-            city = normalize_location(pieces[0])  # unknown city: keep a tidy version
+        if city is None and pieces and normalize_country(pieces[0]) is None:
+            city = normalize_location(pieces[0])  # a city we don't know: keep a tidy version
         if city and country is None and city in INDIAN_CITIES:
             country = "India"
         if city and city not in cities and city != country:
@@ -202,7 +203,7 @@ def normalize(posting: RawPosting) -> NormalizedJob:
         title=title,
         company=company,
         location=location,
-        employment_type=detect_employment_type(title, description),
+        employment_type=posting.employment_hint or detect_employment_type(title, description),
         salary=salary,
         experience_min_years=exp_min,
         experience_max_years=exp_max,

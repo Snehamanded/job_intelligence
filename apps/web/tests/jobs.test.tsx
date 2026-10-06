@@ -152,12 +152,12 @@ describe("SearchStatus", () => {
 });
 
 describe("ImportForm", () => {
-  it("validates a Greenhouse link before importing", async () => {
+  it("validates a job link before importing", async () => {
     const onImport = vi.fn().mockResolvedValue(undefined);
     render(<ImportForm onImport={onImport} />);
-    await userEvent.type(screen.getByLabelText("Job link"), "https://www.linkedin.com/jobs/view/1");
+    await userEvent.type(screen.getByLabelText("Job link"), "not a link");
     await userEvent.click(screen.getByRole("button", { name: "Import job" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Paste a Greenhouse job link");
+    expect(screen.getByRole("alert")).toHaveTextContent("Paste a job link");
     expect(onImport).not.toHaveBeenCalled();
 
     await userEvent.clear(screen.getByLabelText("Job link"));
@@ -195,5 +195,13 @@ describe("ImportForm", () => {
         location: "Bengaluru",
       }),
     );
+  });
+});
+
+describe("source links", () => {
+  it("follows Remote OK links (their terms) and nofollows others", async () => {
+    const { sourceLinkRel } = await import("@/lib/jobs-format");
+    expect(sourceLinkRel("remoteok")).toBe("noopener noreferrer");
+    expect(sourceLinkRel("remotive")).toContain("nofollow");
   });
 });

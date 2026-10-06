@@ -9,7 +9,7 @@ from app.api.deps import (
     AppSettings,
     CurrentUser,
     DbSession,
-    Greenhouse,
+    JobConnectors,
     Queue,
     search_rate_limit,
 )
@@ -105,10 +105,16 @@ def list_job_sources(
     responses={422: {"model": ErrorResponse}},
 )
 def add_job_source(
-    body: JobSourceCreate, user: CurrentUser, db: DbSession, settings: AppSettings, gh: Greenhouse
+    body: JobSourceCreate,
+    user: CurrentUser,
+    db: DbSession,
+    settings: AppSettings,
+    connectors: JobConnectors,
 ) -> JobSourceRead:
     try:
-        config = JobSourceService(db, user.id, settings).add_greenhouse_board(body.board_token, gh)
+        config = JobSourceService(db, user.id, settings).add(
+            body.source, body.identifier, body.display_name, connectors
+        )
     except SourceConfigError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
     return JobSourceRead.model_validate(config)
@@ -210,9 +216,13 @@ def list_jobs(
     responses={422: {"model": ErrorResponse}},
 )
 def import_job(
-    body: JobImportRequest, user: CurrentUser, db: DbSession, gh: Greenhouse, queue: Queue
+    body: JobImportRequest,
+    user: CurrentUser,
+    db: DbSession,
+    connectors: JobConnectors,
+    queue: Queue,
 ) -> JobDetail:
-    importer = JobImporter(db, user.id, gh)
+    importer = JobImporter(db, user.id, connectors)
     try:
         if body.description and body.description.strip():
             job = importer.from_text(

@@ -4,15 +4,17 @@ A personal job-search assistant: resume in, ranked jobs out, then a job CRM, res
 and cover letters. It is **not** an auto-apply bot. See [AGENTS.md](AGENTS.md) for scope and rules,
 and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it fits together.
 
-Status: **Phase 7 (Cover letters)**. Draft cover letters where every sentence about you cites your
+Status: **Phase 8 (More job sources)**. Search Greenhouse, Lever and Ashby company boards and
+the Remote OK and Remotive remote feeds (Adzuna with your own keys), and import any job page that
+publishes standard job data. Draft cover letters where every sentence about you cites your
 resume and every sentence about the company quotes the posting. Tailor your resume for a job: every change is checked
 against your verified resume and needs your approval, then download DOCX or save as PDF. Track applications on a Kanban board with notes, interviews and
 history, and see which sources and match levels lead to interviews. Jobs are scored 0–100 with a
 breakdown and ranked. Upload a resume and get a verified, versioned profile. Set
 preferences, add company Greenhouse boards and search them, then review normalized,
 de-duplicated jobs with eligibility reasons. You can also import any job by link or pasted
-description. With AI processing on, the best jobs also get an AI review (Gemini). More job
-sources come next. See [docs/AI.md](docs/AI.md) and
+description. With AI processing on, the best jobs also get an AI review (Gemini). All planned
+phases are built. See [docs/AI.md](docs/AI.md) and
 [docs/CONNECTORS.md](docs/CONNECTORS.md).
 
 ## Prerequisites
@@ -69,6 +71,8 @@ All configuration comes from `.env` at the repo root. `.env.example` lists every
 | `CONNECTOR_USER_AGENT`, `CONNECTOR_TIMEOUT_SECONDS`, `CONNECTOR_REQUEST_DELAY_SECONDS` | worker, api | How job sources are called |
 | `MAX_GREENHOUSE_BOARDS` | api, worker | Board limit per user |
 | `ENABLE_MOCK_CONNECTORS` | worker | Fictional LinkedIn/Naukri/Indeed jobs for development (labeled as mock) |
+| `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | api, worker | Optional Adzuna API keys (register at developer.adzuna.com and accept their terms) |
+| `REMOTIVE_MIN_INTERVAL_SECONDS`, `REMOTEOK_MIN_INTERVAL_SECONDS` | worker | Minimum time between fetches of the remote feeds (defaults 6h and 1h) |
 | `SEARCH_RATE_LIMIT`, `SEARCH_RATE_WINDOW_SECONDS` | api | Searches, imports and board additions per user per window |
 | `GEMINI_EMBEDDING_MODEL`, `OPENAI_EMBEDDING_MODEL` | worker | Embedding models (768 dims) |
 | `EMBEDDING_MAX_JOBS_PER_RUN` | worker | Jobs embedded per scoring run, eligible ones first |

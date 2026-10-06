@@ -18,22 +18,22 @@ These are the best real sources: they list jobs first, with no stale reposts, an
 | Source | Tier | Access | Notes | Verified |
 |---|---|---|---|---|
 | Greenhouse | A | Public Job Board API per company board token (`boards-api.greenhouse.io`) | Unauthenticated GET for published jobs. **Built in Phase 3** | 2026-10-05: docs confirm unauthenticated GET for list/job/board; robots.txt disallows only `/embed/`; no published rate limit (we pause 1s between boards, cap 25 boards). Pay usually in description text; `pay_input_ranges` often empty. See `docs/CONNECTORS.md` |
-| Lever | A | Public Postings API per company (`api.lever.co/v0/postings/{company}`) | JSON output | |
-| Ashby | A | Public job posting API per job board name | JSON output | |
-| SmartRecruiters | A | Public Posting API per company identifier | Check pagination limits | |
+| Lever | A | Public Postings API per company (`api.lever.co/v0/postings/{company}`) | JSON output. **Built in Phase 8** | 2026-10-06: docs (github.com/lever/postings-api) confirm unauthenticated GET of published postings, `mode=json`, skip/limit; robots.txt `Allow: /`, `Crawl-delay: 1`. No company name in payload; `salaryRange` optional |
+| Ashby | A | Public job posting API per job board name | JSON output. **Built in Phase 8** | 2026-10-06: docs (developers.ashbyhq.com) confirm public `GET /posting-api/job-board/{name}?includeCompensation=true`; no stated rate limits (we pause 1s); robots.txt not served. Compensation used only when `shouldDisplayCompensationOnJobPostings` is true |
+| SmartRecruiters | **C** (was A) | Posting API is documented, but `api.smartrecruiters.com/robots.txt` disallows all agents except LinkedInBot | Mock + manual import (career-page structured data) | 2026-10-06: robots.txt `User-agent: * Disallow: /`; only LinkedInBot allowed `/v1/companies/`. Not built as a real connector |
 | Workday | B/C | No official public API. Career sites use internal JSON endpoints that differ per tenant | Undocumented, may break or be restricted per tenant. Defer; review terms per company before using | |
 | iCIMS | B | Per-tenant. Some expose feeds or JSON-LD | No uniform API | |
 | Taleo | B | Per-tenant, inconsistent | Low priority | |
 | SAP SuccessFactors | B | Per-tenant, inconsistent | Low priority | |
-| Custom career pages | B | `JobPosting` JSON-LD (schema.org), sitemap.xml, RSS | Generic structured-data adapter. Check robots.txt first | |
+| Custom career pages | B | `JobPosting` JSON-LD (schema.org), sitemap.xml, RSS | Generic structured-data adapter. Check robots.txt first. **Phase 8: single-URL import** (robots.txt checked, SSRF-guarded); no crawling | 2026-10-06 |
 
 ## Remote job boards
 
 | Source | Tier | Access | Notes | Verified |
 |---|---|---|---|---|
-| Remote OK | A | Public JSON API | Terms ask for attribution/link-back to the listing. Honor it | |
+| Remote OK | A | Public JSON API | Terms ask for attribution/link-back to the listing. Honor it. **Built in Phase 8** | 2026-10-06: robots.txt allows `/` (`Crawl-delay: 1`). API legal notice: link back to the Remote OK URL **without nofollow**, name Remote OK as source, don't use the logo. We: link without nofollow, show "via Remote OK", no logo, fetch at most hourly |
 | We Work Remotely | B | RSS feeds by category | Link back to source | |
-| Remotive | A | Public API | Documented request-rate guidance and attribution. Cache aggressively | |
+| Remotive | A | Public API | Documented request-rate guidance and attribution. Cache aggressively. **Built in Phase 8** | 2026-10-06: github.com/remotive-com/remote-jobs-api: link back + mention Remotive; >2 req/min blocked; recommends ≤4 queries/day; jobs delayed 24h; don't resubmit to other job boards. robots.txt is behind a Cloudflare challenge (not read, not bypassed); API endpoint answers normally. We fetch at most once per 6h per user |
 | Himalayas | A/B | Public API or feed (confirm) | Verify availability and terms | |
 | Jobspresso | B | RSS (confirm) | Verify | |
 
@@ -43,7 +43,7 @@ These give broad coverage, including India, without scraping job boards. Most ne
 
 | Source | Tier | Notes | Verified |
 |---|---|---|---|
-| Adzuna API | A | Has country endpoints (India included). Key required | |
+| Adzuna API | A | Has country endpoints (India included). Key required. **Built in Phase 8, off until keys are set** | 2026-10-06: docs (developer.adzuna.com/docs/search): `GET /v1/api/jobs/{country}/search/{page}` with app_id/app_key; descriptions are snippets; `salary_is_predicted=1` salaries are ignored (never guess). Terms/limits not public without registering: review at signup. Not live-verified (no keys); tests use a docs-shaped fixture |
 | Jooble API | A | Key required | |
 | Arbeitnow API | A | Mostly Europe, remote-friendly | |
 | HN "Who is hiring" (via Algolia HN API) | A | Monthly thread, good for startups. Needs LLM extraction | |

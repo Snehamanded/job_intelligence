@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     max_jobs_per_source: int = 1000
     enable_mock_connectors: bool = False
     search_job_timeout_seconds: int = 600
+    max_job_boards: int = 25
+    # Global feeds: minimum time between fetches per user, as the sources ask.
+    remotive_min_interval_seconds: int = 6 * 3600  # Remotive: at most ~4 queries a day
+    remoteok_min_interval_seconds: int = 3600
+    adzuna_app_id: SecretStr | None = None
+    adzuna_app_key: SecretStr | None = None
+    import_max_bytes: int = 2 * 1024 * 1024
     search_rate_limit: int = 30
     search_rate_window_seconds: int = 3600
 
@@ -82,7 +89,9 @@ class Settings(BaseSettings):
             raise ValueError("JWT_SECRET must be at least 32 characters")
         return value
 
-    @field_validator("gemini_api_key", "openai_api_key", mode="before")
+    @field_validator(
+        "gemini_api_key", "openai_api_key", "adzuna_app_id", "adzuna_app_key", mode="before"
+    )
     @classmethod
     def _empty_key_is_none(cls, value: object) -> object:
         return None if value == "" else value

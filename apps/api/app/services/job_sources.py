@@ -4,8 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.connectors.adzuna import COUNTRIES
 from app.connectors.base import ConnectorError
-from app.connectors.greenhouse import GreenhouseConnector, valid_token
+from app.connectors.registry import BOARD_SOURCES, TOGGLE_SOURCES, Connectors
 from app.core.config import Settings
 from app.models import JobSourceConfig
 
@@ -36,31 +37,46 @@ class JobSourceService:
             )
         )
 
-    def add_greenhouse_board(self, token: str, greenhouse: GreenhouseConnector) -> JobSourceConfig:
-        token = token.strip().lower()
-        if not valid_token(token):
-            raise SourceConfigError(
-                "Enter the board token from the careers URL, e.g. 'gitlab' from "
-                "job-boards.greenhouse.io/gitlab."
-            )
-        if len(self.list()) >= self._settings.max_greenhouse_boards:
-            raise SourceConfigError(
-                f"You can add up to {self._settings.max_greenhouse_boards} boards."
-            )
-        try:
-            name = greenhouse.board_name(token)  # validates that the board exists
-        except ConnectorError as exc:
-            raise SourceConfigError(f"Could not add '{token}': {exc}") from exc
-        config = JobSourceConfig(
-            user_id=self._user_id, source="greenhouse", identifier=token, display_name=name[:200],
-            enabled=True,
-        )  # fmt: skip
+    def add(
+        self, source: str, identifier: str, display_name: str | None, connectors: Connectors
+    ) -> JobSourceConfig:
+        identifier = identifier.strip()
+        if source in BOARD_SOURCES:
+            identifier = identifier.lower() if source == "greenhouse" else identifier
+            boards = [c for c in self.list() if c.source in BOARD_SOURCES]
+            if len(boards) >= self._settings.max_job_boards:
+                raise SourceConfigError(
+                    f"You can add up to {self._settings.max_job_boards} boards."
+                )
+            validate = {
+                "greenhouse": connectors.greenhouse.board_name,
+                "lever": connectors.lever.validate,
+                "ashby": connectors.ashby.validate,
+            }[source]
+            try:
+                name = validate(identifier)
+            except ConnectorError as exc:
+                raise SourceConfigError(f"Could not add '{identifier}': {exc}") from exc
+            name = (display_name or "").strip() or name
+        elif source in TOGGLE_SOURCES:
+            identifier, name = "*", source
+        elif source == "adzuna":
+            if connectors.adzuna is None:
+                raise SourceConfigError("Adzuna isn't configured on this server.")
+            identifier = identifier.lower() or "in"
+            if identifier not in COUNTRIES:
+                raise SourceConfigError("Choose a supported Adzuna country code, e.g. 'in'.")
+            name = f"Adzuna ({identifier.upper()})"
+        else:
+            raise SourceConfigError("Unknown source")
+        config = JobSourceConfig(user_id=self._user_id, source=source, identifier=identifier,
+                                 display_name=name[:200], enabled=True)  # fmt: skip
         self._session.add(config)
         try:
             self._session.commit()
         except IntegrityError as exc:
             self._session.rollback()
-            raise SourceConfigError(f"'{token}' is already added.") from exc
+            raise SourceConfigError(f"'{identifier}' is already added.") from exc
         return config
 
     def delete(self, config: JobSourceConfig) -> None:

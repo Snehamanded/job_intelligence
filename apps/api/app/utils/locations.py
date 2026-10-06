@@ -100,6 +100,7 @@ def normalize_country(raw: str) -> str | None:
 
 def normalize_region(raw: str) -> str | None:
     key = " ".join(raw.lower().split()).strip(" .,")
+    key = re.sub(r"\s+only$", "", key).strip()  # "USA Only"
     return normalize_country(key) or REGIONS.get(key)
 
 

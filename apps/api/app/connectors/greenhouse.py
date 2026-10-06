@@ -134,7 +134,8 @@ class GreenhouseConnector:
         return to_posting(job, token, self.board_name(token))
 
     def fetch(self, query: SearchQuery, report: FetchReport) -> Iterator[RawPosting]:
-        boards = [t for t in query.targets if valid_token(t)][: self._max_boards]
+        boards = [t.split("|")[0] for t in query.targets if valid_token(t.split("|")[0])]
+        boards = boards[: self._max_boards]
         if not boards:
             raise ConnectorError("No Greenhouse boards configured")
         yielded = 0

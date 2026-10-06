@@ -68,8 +68,19 @@ export const EMPLOYMENT_LABEL: Record<string, string> = {
 
 export const SOURCE_LABEL: Record<string, string> = {
   greenhouse: "Greenhouse",
+  lever: "Lever",
+  ashby: "Ashby",
+  remoteok: "Remote OK",
+  remotive: "Remotive",
+  adzuna: "Adzuna",
+  careers: "Career page",
   manual: "Imported",
   linkedin: "LinkedIn",
   naukri: "Naukri",
   indeed: "Indeed",
 };
+
+/** Remote OK's terms ask for a followed link back; other sources get nofollow. */
+export function sourceLinkRel(source: string): string {
+  return source === "remoteok" ? "noopener noreferrer" : "noopener noreferrer nofollow";
+}

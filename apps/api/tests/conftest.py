@@ -34,10 +34,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.ai.providers.fake import FakeAIProvider
-from app.api.deps import get_file_storage, get_greenhouse, get_task_queue
+from app.api.deps import get_connectors, get_file_storage, get_task_queue
 from app.connectors.base import JobConnector
 from app.connectors.greenhouse import GreenhouseConnector
-from app.connectors.http import make_client
+from app.connectors.registry import Connectors, build
 from app.core.config import Settings, get_settings
 from app.core.db import get_engine, get_sessionmaker
 from app.core.redis import get_redis
@@ -87,39 +87,99 @@ def redis() -> fakeredis.FakeRedis:
 GREENHOUSE_FIXTURES = Path(__file__).parent / "fixtures" / "greenhouse"
 
 
+SOURCES = Path(__file__).parent / "fixtures" / "sources"
+CAREERS = Path(__file__).parent / "fixtures" / "careers"
+# Fake DNS for the import tests: public by default, private for these hosts.
+PRIVATE_HOSTS = {"localhost": "127.0.0.1", "intranet.example": "10.0.0.5",
+                 "metadata.example": "169.254.169.254", "v6local.example": "::1"}  # fmt: skip
+
+
+def fake_resolve(host: str) -> list[str]:
+    return [PRIVATE_HOSTS.get(host, "93.184.216.34")]
+
+
+def _json(path: Path) -> httpx.Response:
+    if not path.exists():
+        return httpx.Response(404, json={"error": "not found"})
+    return httpx.Response(200, json=json.loads(path.read_text()))
+
+
 def greenhouse_transport(
     fail_boards: frozenset[str] = frozenset(), requests: list[httpx.Request] | None = None
 ) -> httpx.MockTransport:
-    """Serves recorded Greenhouse responses. Any unknown board is a 404. No network."""
+    """Serves recorded responses for every source. Unknown paths are 404. No network."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         if requests is not None:
             requests.append(request)
-        parts = request.url.path.strip("/").split("/")  # v1/boards/{token}[/jobs[/{id}]]
-        token = parts[2] if len(parts) > 2 else ""
-        if token in fail_boards:
-            return httpx.Response(500)
-        if len(parts) == 3:
-            path = GREENHOUSE_FIXTURES / f"{token}_board.json"
-        else:
-            path = GREENHOUSE_FIXTURES / f"{token}_jobs.json"
-        if not path.exists():
-            return httpx.Response(404, json={"status": 404, "error": "Job not found"})
-        data = json.loads(path.read_text())
-        if len(parts) == 5:
-            job = next((j for j in data["jobs"] if str(j["id"]) == parts[4]), None)
-            return httpx.Response(200, json=job) if job else httpx.Response(404)
-        return httpx.Response(200, json=data)
+        host, path = request.url.host, request.url.path
+        parts = path.strip("/").split("/")
+        if host == "boards-api.greenhouse.io":
+            token = parts[2] if len(parts) > 2 else ""
+            if token in fail_boards:
+                return httpx.Response(500)
+            if len(parts) == 3:
+                return _json(GREENHOUSE_FIXTURES / f"{token}_board.json")
+            fixture = GREENHOUSE_FIXTURES / f"{token}_jobs.json"
+            if not fixture.exists():
+                return httpx.Response(404, json={"status": 404})
+            data = json.loads(fixture.read_text())
+            if len(parts) == 5:
+                job = next((j for j in data["jobs"] if str(j["id"]) == parts[4]), None)
+                return httpx.Response(200, json=job) if job else httpx.Response(404)
+            return httpx.Response(200, json=data)
+        if host in ("api.lever.co", "api.eu.lever.co"):  # /v0/postings/{site}[/{id}]
+            site = parts[2]
+            if site in fail_boards:
+                return httpx.Response(500)
+            fixture = SOURCES / f"lever_{site}.json"
+            if not fixture.exists():
+                return httpx.Response(404, json={"ok": False})
+            postings = json.loads(fixture.read_text())
+            if len(parts) == 4:
+                p = next((x for x in postings if x["id"] == parts[3]), None)
+                return httpx.Response(200, json=p) if p else httpx.Response(404)
+            skip = int(request.url.params.get("skip", 0))
+            limit = int(request.url.params.get("limit", 1000))
+            return httpx.Response(200, json=postings[skip : skip + limit])
+        if host == "api.ashbyhq.com":
+            return _json(SOURCES / f"ashby_{parts[-1]}.json")
+        if host == "remoteok.com" and path == "/api":
+            return _json(SOURCES / "remoteok.json")
+        if host == "remotive.com" and path == "/api/remote-jobs":
+            return _json(SOURCES / "remotive.json")
+        if host == "api.adzuna.com":
+            return _json(SOURCES / f"adzuna_{parts[3]}.json")
+        if host == "careers.example.com":
+            if path == "/robots.txt":
+                return httpx.Response(200, text="User-agent: *\nDisallow: /private/\n")
+            if path == "/moved":
+                return httpx.Response(302, headers={"location": "/jobs/platform"})
+            if path == "/to-internal":
+                return httpx.Response(302, headers={"location": "http://intranet.example/admin"})
+            page = {"/jobs/platform": "job.html", "/jobs/remote": "remote.html",
+                    "/about": "none.html", "/private/job": "job.html"}.get(path)  # fmt: skip
+            if page:
+                return httpx.Response(200, text=(CAREERS / page).read_text(),
+                                      headers={"content-type": "text/html; charset=utf-8"})  # fmt: skip
+            if path == "/file.pdf":
+                return httpx.Response(
+                    200, content=b"%PDF-1.4", headers={"content-type": "application/pdf"}
+                )
+        return httpx.Response(404)
 
     return httpx.MockTransport(handler)
 
 
-def fake_greenhouse(transport: httpx.MockTransport | None = None) -> GreenhouseConnector:
-    return GreenhouseConnector(
-        make_client(get_settings(), transport or greenhouse_transport()),
-        delay_seconds=0,
-        sleep=lambda _: None,
+def fake_connectors(transport: httpx.MockTransport | None = None) -> Connectors:
+    settings = get_settings().model_copy(update={"connector_request_delay_seconds": 0})
+    return build(
+        settings, transport or greenhouse_transport(), resolve=fake_resolve, sleep=lambda _: None
     )
+
+
+def fake_greenhouse(transport: httpx.MockTransport | None = None) -> GreenhouseConnector:
+    return fake_connectors(transport).greenhouse
 
 
 class InlineQueue:
@@ -131,7 +191,7 @@ class InlineQueue:
         self.storage = storage
         self.paused = False
         self.pending: list[tuple[uuid.UUID, uuid.UUID]] = []
-        self.connectors: list[JobConnector] = [fake_greenhouse()]
+        self.connectors: list[JobConnector] = fake_connectors().for_search(settings)
         self.rescores = 0
 
     def enqueue_search(self, user_id: uuid.UUID, run_id: uuid.UUID) -> None:
@@ -204,7 +264,7 @@ def app(redis: fakeredis.FakeRedis, storage: LocalFileStorage, queue: InlineQueu
     application.dependency_overrides[get_redis] = lambda: redis
     application.dependency_overrides[get_file_storage] = lambda: storage
     application.dependency_overrides[get_task_queue] = lambda: queue
-    application.dependency_overrides[get_greenhouse] = lambda: fake_greenhouse()
+    application.dependency_overrides[get_connectors] = lambda: fake_connectors()
     return application
 
 

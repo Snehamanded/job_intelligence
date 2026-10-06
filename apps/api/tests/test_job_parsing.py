@@ -84,6 +84,8 @@ def test_html_to_text() -> None:
     [
         ("Bengaluru-VTP, India", "", "onsite", ["Bengaluru"], []),
         ("Bangalore, India", "", "onsite", ["Bengaluru"], []),
+        ("London, United Kingdom", "", "onsite", ["London"], []),
+        ("Paris, France", "", "onsite", ["Paris"], []),
         ("Remote, Canada; Remote, US", "", "remote", [], ["Canada", "United States"]),
         ("Remote - USA", "", "remote", [], ["United States"]),
         ("Remote", "", "remote", [], []),

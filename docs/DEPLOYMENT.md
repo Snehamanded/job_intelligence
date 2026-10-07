@@ -55,7 +55,7 @@ The app creates its tables and the pgvector extension itself on first start.
    |---|---|
    | `DATABASE_URL` | the Neon connection string |
    | `REDIS_URL` | the Upstash `rediss://` URL |
-   | `ALLOWED_SIGNUP_EMAILS` | your email: the only address that can register |
+   | `ALLOWED_SIGNUP_EMAILS` | leave empty for public signup, or comma-separated emails for invite-only |
    | `CORS_ORIGINS` | your Vercel address, once you have it (step 4), e.g. `https://jobcrm.vercel.app` |
    | `GEMINI_API_KEY` | your new Gemini key |
    | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | your Adzuna keys |
@@ -65,8 +65,7 @@ The app creates its tables and the pgvector extension itself on first start.
 3. Deploy. When it's live, open `https://<your-service>.onrender.com/api/health`. It should show
    `{"status":"ok","database":"ok","redis":"ok"}`.
 
-The API refuses to start in production without secure cookies and either
-`ALLOWED_SIGNUP_EMAILS` or `ALLOW_REGISTRATION=false`. The error is in Render's logs.
+The API refuses to start in production without `COOKIE_SECURE=true`. The error is in Render's logs.
 
 ## 4. Vercel (website)
 
@@ -83,7 +82,7 @@ The API refuses to start in production without secure cookies and either
 
 ## 5. First use
 
-1. Open your Vercel address and register with the email from `ALLOWED_SIGNUP_EMAILS`.
+1. Open your Vercel address and create an account. If `ALLOWED_SIGNUP_EMAILS` is set, use one of those addresses.
 2. In **Settings**, turn on AI processing if you want Gemini to read your resume and posts.
 3. Upload your resume, check the profile, and run a search.
 
@@ -95,7 +94,7 @@ start.
 ## Troubleshooting
 
 - **The first page load fails or hangs:** Render was asleep. Wait up to a minute and refresh.
-- **"Registration is disabled":** the email doesn't match `ALLOWED_SIGNUP_EMAILS` exactly.
+- **"Registration is disabled":** `ALLOW_REGISTRATION` is false, or the email isn't in `ALLOWED_SIGNUP_EMAILS`.
 - **Logged out on every request / CSRF errors:** `NEXT_PUBLIC_API_URL` must be `/` on Vercel, so
   the browser only talks to the Vercel address. Redeploy Vercel after changing it (it's read at
   build time).

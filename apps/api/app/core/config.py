@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     cookie_secure: bool = False
     allow_registration: bool = True
-    # Comma-separated emails allowed to register (empty: anyone, when registration is allowed).
-    # Set this on a public deployment so nobody else can use your AI and API allowances.
+    # Comma-separated emails allowed to register. Empty means anyone can register when
+    # ALLOW_REGISTRATION is true. Set a list if you want to keep signup invite-only.
     allowed_signup_emails: str = ""
 
     auth_rate_limit: int = 10
@@ -108,6 +108,17 @@ class Settings(BaseSettings):
                 return "postgresql+psycopg://" + value[len(prefix) :]
         return value
 
+    @field_validator("redis_url")
+    @classmethod
+    def _redis_scheme(cls, value: str) -> str:
+        value = value.strip()
+        if not value.startswith(("redis://", "rediss://", "unix://")):
+            raise ValueError(
+                "REDIS_URL must start with rediss:// (or redis://). For Upstash, copy the Redis "
+                "URL from the database's Connect section (TCP), not the REST URL or token."
+            )
+        return value
+
     @field_validator("jwt_secret")
     @classmethod
     def _strong_secret(cls, value: SecretStr) -> SecretStr:
@@ -130,8 +141,6 @@ class Settings(BaseSettings):
         problems = []
         if not self.cookie_secure:
             problems.append("COOKIE_SECURE must be true (HTTPS)")
-        if self.allow_registration and not self.allowed_signup_emails.strip():
-            problems.append("set ALLOWED_SIGNUP_EMAILS or ALLOW_REGISTRATION=false")
         if problems:
             raise ValueError("Unsafe production settings: " + "; ".join(problems))
         return self

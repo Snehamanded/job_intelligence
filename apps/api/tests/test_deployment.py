@@ -32,8 +32,10 @@ def test_signup_allowlist(client: TestClient, monkeypatch: pytest.MonkeyPatch) -
 def test_production_refuses_unsafe_settings() -> None:
     base = {"database_url": "postgresql://u:p@h/d", "jwt_secret": SECRET,
             "environment": "production"}  # fmt: skip
-    with pytest.raises(ValidationError, match=r"COOKIE_SECURE.*ALLOWED_SIGNUP_EMAILS"):
+    with pytest.raises(ValidationError, match="COOKIE_SECURE"):
         Settings(**base, cookie_secure=False, allow_registration=True, allowed_signup_emails="")  # type: ignore[arg-type]
+    open_signup = Settings(**base, cookie_secure=True, allowed_signup_emails="")  # type: ignore[arg-type]
+    assert open_signup.signup_allowed("anyone@example.com")
     ok = Settings(**base, cookie_secure=True, allowed_signup_emails="me@example.com")  # type: ignore[arg-type]
     assert ok.signup_allowed("ME@example.com") and not ok.signup_allowed("x@example.com")
     assert Settings(**base, cookie_secure=True, allow_registration=False)  # type: ignore[arg-type]
@@ -84,3 +86,12 @@ def test_retention_deletes_only_stale_untouched_jobs(
         remaining = set(session.scalars(select(Job.id).where(Job.user_id == user_id)))
         assert remaining == {uuid.UUID(applied), uuid.UUID(fresh)}
         assert session.scalar(select(func.count()).select_from(Application)) == 1
+
+
+def test_wrong_redis_url_fails_with_a_clear_message() -> None:
+    with pytest.raises(ValidationError, match="Connect section"):
+        Settings(database_url="postgresql://u:p@h/d", jwt_secret=SECRET,
+                 redis_url="https://eu1-example.upstash.io")  # fmt: skip
+    ok = Settings(database_url="postgresql://u:p@h/d", jwt_secret=SECRET,
+                  redis_url=" rediss://default:pw@example.upstash.io:6379 ")  # fmt: skip
+    assert ok.redis_url == "rediss://default:pw@example.upstash.io:6379"

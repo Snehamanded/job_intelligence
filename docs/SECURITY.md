@@ -16,7 +16,9 @@ budget, truthfulness) is detailed in [AI.md](AI.md).
   in again after expiry.
 - **Logout** clears the cookies. JWTs are stateless, so a stolen token stays valid until it
   expires. A server-side session or token version can be added if that matters later.
-- **Registration** can be turned off with `ALLOW_REGISTRATION=false`. The MVP is single-user.
+- **Registration** can be turned off with `ALLOW_REGISTRATION=false`. Leave `ALLOWED_SIGNUP_EMAILS`
+  empty for public signup, or set a comma-separated list to keep it invite-only. Each account is
+  isolated by `user_id`; AI and job-API keys are still shared across the deployment.
 
 ## CSRF
 
@@ -89,9 +91,10 @@ limit: `AI_RATE_LIMIT` per `AI_RATE_WINDOW_SECONDS`. Account deletion shares the
 
 ## Public deployment
 
-- `ENVIRONMENT=production` refuses to start without `COOKIE_SECURE=true` and either
-  `ALLOWED_SIGNUP_EMAILS` (only those addresses can register) or `ALLOW_REGISTRATION=false`, so a
-  public URL can't be used by others to spend the owner's AI and API allowances.
+- `ENVIRONMENT=production` refuses to start without `COOKIE_SECURE=true`. Signup is public when
+  `ALLOW_REGISTRATION=true` and `ALLOWED_SIGNUP_EMAILS` is empty. A non-empty allowlist still
+  restricts who can register. Anyone who signs up shares the owner's Gemini/Adzuna keys and
+  hosting quotas.
 - On Vercel, the website proxies `/api/*` to the API: the browser only sees one origin, so the
   auth cookie is first-party and `SameSite=Lax` holds.
 - Uvicorn doesn't trust `X-Forwarded-For` there: it can be forged through the proxies, which would

@@ -28,7 +28,7 @@ services:
         sync: false
       - key: REDIS_URL # Upstash rediss:// URL
         sync: false
-      - key: ALLOWED_SIGNUP_EMAILS # your email
+      - key: ALLOWED_SIGNUP_EMAILS # empty = public signup; or comma-separated emails
         sync: false
       - key: CORS_ORIGINS # your Vercel site, e.g. https://jobcrm.vercel.app
         sync: false
